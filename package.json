@@ -5,7 +5,8 @@
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "repository": {
     "type": "git",
@@ -19,7 +20,8 @@
   },
   "homepage": "https://github.com/anubluskrin/TA-Kriptoasik#readme",
   "devDependencies": {
-    "electron": "^45.2.3"
+    "electron": "^45.2.3",
+    "vitest": "^5.1.0"
   },
   "dependencies": {
     "ws": "^8.22.1"
