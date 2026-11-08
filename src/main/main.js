@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, session} = require('electron');
 const path = require('node:path');
 
 function createWindow() {
@@ -16,6 +16,15 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+  
+  // Hanya izinkan akses kamera/mikrofon (tipe 'media'), tolak izin lain
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    callback(permission === 'media');
+  });
+  session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
+    return permission === 'media';
+  });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
