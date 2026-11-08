@@ -2,8 +2,9 @@
   "name": "ta-kriptoasik",
   "version": "1.0.0",
   "description": "Aplikasi desktop kriptografi untuk Tugas Akhir Kriptografi. Satu aplikasi yang menggabungkan autentikasi berlapis (dongle flashdisk, password, biometrik wajah), super enkripsi teks (Vigenère + S-DES), enkripsi file, enkripsi basis data, steganografi gambar, blockchain sederhana, dan **komunikasi dua arah antar dua laptop**.",
-  "main": "index.js",
+  "main": "src/main/main.js",
   "scripts": {
+    "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/anubluskrin/TA-Kriptoasik/issues"
   },
-  "homepage": "https://github.com/anubluskrin/TA-Kriptoasik#readme"
+  "homepage": "https://github.com/anubluskrin/TA-Kriptoasik#readme",
+  "devDependencies": {
+    "electron": "^45.2.3"
+  }
 }
