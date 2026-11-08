@@ -20,5 +20,8 @@
   "homepage": "https://github.com/anubluskrin/TA-Kriptoasik#readme",
   "devDependencies": {
     "electron": "^45.2.3"
+  },
+  "dependencies": {
+    "ws": "^8.22.1"
   }
 }
