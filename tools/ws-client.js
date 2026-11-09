@@ -1,6 +1,6 @@
 const WebSocket = require('ws');
 
-const url = process.argv[2] || 'ws://localhost:8080';
+const url = process.argv[2] || 'ws://localhost:8765';
 const name = process.argv[3] || 'anon';
 const socket = new WebSocket(url);
 
