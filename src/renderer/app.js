@@ -154,3 +154,90 @@ document.getElementById('file-enkripsi').addEventListener('click', () => {
 document.getElementById('file-dekripsi').addEventListener('click', () => {
   jalankanFile(() => window.api.fileDekripsi(elFilePass.value));
 });
+
+// Halaman Aset
+const elAsetStatus = document.getElementById('aset-status');
+const elAsetDaftar = document.getElementById('aset-daftar');
+const elAsetRantai = document.getElementById('aset-rantai');
+
+function ringkasData(data) {
+  if (data.tipe === 'REGISTER') return `REGISTER ${data.idAset} "${data.nama}" oleh ${data.pemilik}`;
+  if (data.tipe === 'TRANSFER') return `TRANSFER ${data.idAset}: ${data.dari} -> ${data.ke}`;
+  return data.tipe;
+}
+
+function tampilkanAset(respons) {
+  if (!respons.ok) {
+    elAsetStatus.textContent = 'Gagal: ' + respons.galat;
+    elAsetStatus.className = 'status galat';
+    return;
+  }
+
+  const { rantai, aset, validasi } = respons;
+
+  elAsetDaftar.textContent = aset.length
+    ? aset.map((a) => `${a.idAset.padEnd(12)} ${a.nama.padEnd(24)} pemilik: ${a.pemilik}`).join('\n')
+    : '(belum ada aset)';
+
+  elAsetRantai.textContent = rantai
+    .map((b, i) => {
+      const tandaRusak = !validasi.valid && i === validasi.indeksRusak ? '   <-- RUSAK' : '';
+      return [
+        `Blok #${b.index}  ${ringkasData(b.data)}${tandaRusak}`,
+        `  hash       : ${b.hash}`,
+        `  sebelumnya : ${b.hashSebelumnya}`,
+        `  nonce      : ${b.nonce}`,
+      ].join('\n');
+    })
+    .join('\n\n');
+
+  const awal = respons.pesan ? respons.pesan + '. ' : '';
+  if (validasi.valid) {
+    elAsetStatus.textContent = `${awal}Rantai valid (${rantai.length} blok, kesulitan ${respons.kesulitan})`;
+    elAsetStatus.className = 'status sukses';
+  } else {
+    elAsetStatus.textContent = `${awal}Rantai RUSAK pada blok #${validasi.indeksRusak}: ${validasi.alasan}`;
+    elAsetStatus.className = 'status galat';
+  }
+}
+
+async function jalankanAset(aksi) {
+  elAsetStatus.textContent = 'Memproses...';
+  elAsetStatus.className = 'status';
+  try {
+    tampilkanAset(await aksi());
+  } catch (err) {
+    tampilkanAset({ ok: false, galat: err.message });
+  }
+}
+
+const nilaiAset = (id) => document.getElementById(id).value;
+
+document.getElementById('aset-daftarkan').addEventListener('click', () => {
+  jalankanAset(() =>
+    window.api.asetDaftarkan(nilaiAset('aset-id-daftar'), nilaiAset('aset-nama'), nilaiAset('aset-pemilik'))
+  );
+});
+
+document.getElementById('aset-transfer').addEventListener('click', () => {
+  jalankanAset(() =>
+    window.api.asetTransfer(nilaiAset('aset-id-transfer'), nilaiAset('aset-dari'), nilaiAset('aset-ke'))
+  );
+});
+
+document.getElementById('aset-rusakkan').addEventListener('click', () => {
+  jalankanAset(() =>
+    window.api.asetRusakkan(parseInt(nilaiAset('aset-blok-rusak'), 10), nilaiAset('aset-nilai-palsu'))
+  );
+});
+
+document.getElementById('aset-validasi').addEventListener('click', () => {
+  jalankanAset(() => window.api.asetValidasi());
+});
+
+document.getElementById('aset-reset').addEventListener('click', () => {
+  jalankanAset(() => window.api.asetReset());
+});
+
+// Muat rantai yang tersimpan saat aplikasi dibuka
+jalankanAset(() => window.api.asetStatus());

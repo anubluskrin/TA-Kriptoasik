@@ -11,4 +11,11 @@ contextBridge.exposeInMainWorld('api', {
   fileDekripsi: (passphrase) => ipcRenderer.invoke('file:dekripsi', passphrase),
   gambarSisipkan: (pesan, passphrase) => ipcRenderer.invoke('gambar:sisipkan', pesan, passphrase),
   gambarEkstrak: (passphrase) => ipcRenderer.invoke('gambar:ekstrak', passphrase),
+
+  asetStatus: () => ipcRenderer.invoke('aset:status'),
+  asetDaftarkan: (idAset, nama, pemilik) => ipcRenderer.invoke('aset:daftarkan', idAset, nama, pemilik),
+  asetTransfer: (idAset, dari, ke) => ipcRenderer.invoke('aset:transfer', idAset, dari, ke),
+  asetValidasi: () => ipcRenderer.invoke('aset:validasi'),
+  asetRusakkan: (nomor, nilai) => ipcRenderer.invoke('aset:rusakkan', nomor, nilai),
+  asetReset: () => ipcRenderer.invoke('aset:reset'),
 });

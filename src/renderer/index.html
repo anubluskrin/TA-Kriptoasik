@@ -14,6 +14,7 @@
       <button class="menu-item" data-page="pesan">Pesan Teks</button>
       <button class="menu-item" data-page="file">File</button>
       <button class="menu-item" data-page="gambar">Gambar</button>
+      <button class="menu-item" data-page="aset">Aset</button>
       <button class="menu-item" data-page="webcam">Uji Webcam</button>
     </nav>
   </aside>
@@ -104,6 +105,53 @@
         <summary>Rincian proses</summary>
         <pre id="gambar-rincian" class="keluaran"></pre>
       </details>
+    </section>
+
+        <!-- Aset -->
+    <section id="page-aset" class="page">
+      <h1>Aset</h1>
+      <p>Pencatatan kepemilikan aset dengan blockchain sederhana (SHA-256, proof of work). Setiap pendaftaran dan transfer menjadi satu blok yang saling terkait.</p>
+
+      <h2>Daftarkan aset</h2>
+      <label for="aset-id-daftar">ID aset (huruf, angka, - dan _)</label>
+      <input id="aset-id-daftar" type="text" value="LAP-01" autocomplete="off" />
+      <label for="aset-nama">Nama aset</label>
+      <input id="aset-nama" type="text" value="Laptop Dell" autocomplete="off" />
+      <label for="aset-pemilik">Pemilik</label>
+      <input id="aset-pemilik" type="text" value="Andi" autocomplete="off" />
+      <div class="baris-tombol">
+        <button id="aset-daftarkan" class="aksi">Daftarkan aset</button>
+      </div>
+
+      <h2>Transfer aset</h2>
+      <label for="aset-id-transfer">ID aset</label>
+      <input id="aset-id-transfer" type="text" value="LAP-01" autocomplete="off" />
+      <label for="aset-dari">Pengirim (harus pemilik saat ini)</label>
+      <input id="aset-dari" type="text" value="Andi" autocomplete="off" />
+      <label for="aset-ke">Pemilik baru</label>
+      <input id="aset-ke" type="text" value="Citra" autocomplete="off" />
+      <div class="baris-tombol">
+        <button id="aset-transfer" class="aksi">Transfer</button>
+      </div>
+
+      <h2>Uji keamanan rantai</h2>
+      <label for="aset-blok-rusak">Nomor blok yang dipalsukan</label>
+      <input id="aset-blok-rusak" type="text" value="1" inputmode="numeric" autocomplete="off" />
+      <label for="aset-nilai-palsu">Nama pemilik palsu</label>
+      <input id="aset-nilai-palsu" type="text" value="Penjahat" autocomplete="off" />
+      <div class="baris-tombol">
+        <button id="aset-rusakkan" class="aksi sekunder">Palsukan isi blok</button>
+        <button id="aset-validasi" class="aksi sekunder">Validasi rantai</button>
+        <button id="aset-reset" class="aksi sekunder">Reset rantai</button>
+      </div>
+
+      <p id="aset-status" class="status"></p>
+
+      <h2>Daftar aset saat ini</h2>
+      <pre id="aset-daftar" class="keluaran"></pre>
+
+      <h2>Isi rantai</h2>
+      <pre id="aset-rantai" class="keluaran"></pre>
     </section>
 
     <!-- Uji Webcam (sementara, dipindah dari halaman awal) -->
