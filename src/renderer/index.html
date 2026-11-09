@@ -13,6 +13,7 @@
       <button class="menu-item active" data-page="beranda">Beranda</button>
       <button class="menu-item" data-page="pesan">Pesan Teks</button>
       <button class="menu-item" data-page="file">File</button>
+      <button class="menu-item" data-page="gambar">Gambar</button>
       <button class="menu-item" data-page="webcam">Uji Webcam</button>
     </nav>
   </aside>
@@ -76,6 +77,32 @@
       <details class="rincian" open>
         <summary>Rincian proses</summary>
         <pre id="file-rincian" class="keluaran"></pre>
+      </details>
+    </section>
+
+        <!-- Gambar -->
+    <section id="page-gambar" class="page">
+      <h1>Gambar</h1>
+      <p>Steganografi: sembunyikan pesan teks di dalam gambar PNG (LSB). Pesan dienkripsi dulu dengan AES-256-GCM. Gambar hasil harus tetap berformat PNG; jangan dikirim lewat aplikasi yang mengompres gambar.</p>
+
+      <label for="gambar-passphrase">Passphrase (minimal 8 karakter)</label>
+      <input id="gambar-passphrase" type="password" autocomplete="off" />
+
+      <label for="gambar-pesan">Pesan yang disembunyikan</label>
+      <textarea id="gambar-pesan" rows="4"></textarea>
+
+      <div class="baris-tombol">
+        <button id="gambar-sisipkan" class="aksi">Pilih PNG lalu sisipkan pesan</button>
+        <button id="gambar-ekstrak" class="aksi sekunder">Pilih PNG lalu ambil pesan</button>
+      </div>
+
+      <label for="gambar-hasil">Pesan hasil ekstraksi</label>
+      <textarea id="gambar-hasil" rows="4" readonly></textarea>
+      <p id="gambar-status" class="status"></p>
+
+      <details class="rincian" open>
+        <summary>Rincian proses</summary>
+        <pre id="gambar-rincian" class="keluaran"></pre>
       </details>
     </section>
 

@@ -1,3 +1,49 @@
+// Halaman Gambar
+const elGambarPass = document.getElementById('gambar-passphrase');
+const elGambarPesan = document.getElementById('gambar-pesan');
+const elGambarHasil = document.getElementById('gambar-hasil');
+const elGambarStatus = document.getElementById('gambar-status');
+const elGambarRincian = document.getElementById('gambar-rincian');
+
+function tampilkanHasilGambar(respons) {
+  elGambarRincian.textContent = '';
+  elGambarHasil.value = '';
+  if (!respons.ok) {
+    elGambarStatus.textContent = 'Gagal: ' + respons.galat;
+    elGambarStatus.className = 'status galat';
+    return;
+  }
+  if (respons.dibatalkan) {
+    elGambarStatus.textContent = 'Dibatalkan';
+    elGambarStatus.className = 'status';
+    return;
+  }
+  if (respons.hasil !== undefined) elGambarHasil.value = respons.hasil;
+  elGambarRincian.textContent = respons.rincian
+    .map(([label, nilai]) => label.padEnd(22) + ': ' + nilai)
+    .join('\n');
+  elGambarStatus.textContent = 'Berhasil';
+  elGambarStatus.className = 'status sukses';
+}
+
+async function jalankanGambar(aksi) {
+  elGambarStatus.textContent = 'Memproses...';
+  elGambarStatus.className = 'status';
+  try {
+    tampilkanHasilGambar(await aksi());
+  } catch (err) {
+    tampilkanHasilGambar({ ok: false, galat: err.message });
+  }
+}
+
+document.getElementById('gambar-sisipkan').addEventListener('click', () => {
+  jalankanGambar(() => window.api.gambarSisipkan(elGambarPesan.value, elGambarPass.value));
+});
+
+document.getElementById('gambar-ekstrak').addEventListener('click', () => {
+  jalankanGambar(() => window.api.gambarEkstrak(elGambarPass.value));
+});
+
 // Navigasi antar halaman
 const menuItems = document.querySelectorAll('.menu-item');
 const pages = document.querySelectorAll('.page');

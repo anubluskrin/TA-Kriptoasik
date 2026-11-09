@@ -9,4 +9,6 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('pesan:dekripsi', teks, kunciVigenere, kunciSdes),
   fileEnkripsi: (passphrase) => ipcRenderer.invoke('file:enkripsi', passphrase),
   fileDekripsi: (passphrase) => ipcRenderer.invoke('file:dekripsi', passphrase),
+  gambarSisipkan: (pesan, passphrase) => ipcRenderer.invoke('gambar:sisipkan', pesan, passphrase),
+  gambarEkstrak: (passphrase) => ipcRenderer.invoke('gambar:ekstrak', passphrase),
 });
