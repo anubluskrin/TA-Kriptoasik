@@ -104,3 +104,69 @@ describe('sdes - bagian 2: enkripsi dan dekripsi satu blok', () => {
     expect(sdes.cariSbox(sdes.S0, [1, 1, 1, 1])).toEqual([1, 0]);
   });
 });
+
+describe('sdes - bagian 3: mode CBC', () => {
+  const KUNCI = '1010000010';
+  const IV = Buffer.from([0x5a]);
+
+  it('round-trip untuk teks biasa', () => {
+    const asal = Buffer.from('Halo, ini pesan rahasia!', 'utf8');
+    const c = sdes.cbcEncrypt(asal, KUNCI, IV);
+    expect(c.length).toBe(asal.length);
+    expect(c.equals(asal)).toBe(false);
+    expect(sdes.cbcDecrypt(c, KUNCI, IV).equals(asal)).toBe(true);
+  });
+
+  it('round-trip untuk seluruh nilai byte 0-255', () => {
+    const asal = Buffer.from(Array.from({ length: 256 }, (_, i) => i));
+    const c = sdes.cbcEncrypt(asal, KUNCI, IV);
+    expect(sdes.cbcDecrypt(c, KUNCI, IV).equals(asal)).toBe(true);
+  });
+
+  it('round-trip untuk data kosong', () => {
+    const c = sdes.cbcEncrypt(Buffer.alloc(0), KUNCI, IV);
+    expect(c.length).toBe(0);
+    expect(sdes.cbcDecrypt(c, KUNCI, IV).length).toBe(0);
+  });
+
+  it('IV berbeda menghasilkan ciphertext berbeda', () => {
+    const asal = Buffer.from('pesan yang sama', 'utf8');
+    const a = sdes.cbcEncrypt(asal, KUNCI, Buffer.from([0x01]));
+    const b = sdes.cbcEncrypt(asal, KUNCI, Buffer.from([0x02]));
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it('byte berulang tidak menghasilkan ciphertext berulang (beda dengan ECB)', () => {
+    const asal = Buffer.alloc(16, 0x41); // 16 kali 'A'
+    const c = sdes.cbcEncrypt(asal, KUNCI, IV);
+    expect(new Set(c).size).toBeGreaterThan(1);
+  });
+
+  it('kunci salah tidak mengembalikan plaintext', () => {
+    const asal = Buffer.from('rahasia sekali', 'utf8');
+    const c = sdes.cbcEncrypt(asal, KUNCI, IV);
+    const hasil = sdes.cbcDecrypt(c, '0000000001', IV);
+    expect(hasil.equals(asal)).toBe(false);
+  });
+
+  it('IV salah hanya merusak byte pertama', () => {
+    const asal = Buffer.from('abcdefgh', 'utf8');
+    const c = sdes.cbcEncrypt(asal, KUNCI, IV);
+    const hasil = sdes.cbcDecrypt(c, KUNCI, Buffer.from([0x00]));
+    expect(hasil.subarray(1).equals(asal.subarray(1))).toBe(true);
+    expect(hasil[0]).not.toBe(asal[0]);
+  });
+
+  it('menolak data bukan Buffer dan IV yang tidak valid', () => {
+    expect(() => sdes.cbcEncrypt('teks', KUNCI, IV)).toThrow(TypeError);
+    expect(() => sdes.cbcEncrypt(Buffer.from('a'), KUNCI, Buffer.from([1, 2]))).toThrow();
+    expect(() => sdes.cbcEncrypt(Buffer.from('a'), KUNCI, 5)).toThrow();
+  });
+
+  it('konsisten dengan enkripsiBlok untuk byte pertama', () => {
+    const p = Buffer.from([0b01110010]);
+    const iv = Buffer.from([0b00000000]); // XOR dengan 0 tidak mengubah apa pun
+    const c = sdes.cbcEncrypt(p, KUNCI, iv);
+    expect(c[0]).toBe(0b01110111); // vektor uji README
+  });
+});

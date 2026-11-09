@@ -1,6 +1,7 @@
 // S-DES (Simplified DES): blok 8-bit, kunci 10-bit, 2 putaran Feistel.
 // Bagian 1: tabel permutasi dan pembangkit subkunci K1 dan K2.
 // Bagian 2: enkripsi dan dekripsi satu blok 8 bit.
+// Bagian 3: mode CBC untuk data berupa Buffer (satu byte = satu blok).
 // Bit direpresentasikan sebagai array angka, mis. [1, 0, 1, 0, ...]
 
 // Semua tabel memakai indeks mulai dari 1
@@ -128,6 +129,56 @@ function dekripsiBlok(blok, kunci) {
   return prosesBlok(terimaBit(blok, 8), k2, k1);
 }
 
+// Byte (0-255) <-> array 8 bit
+function byteKeBit(byte) {
+  return byte.toString(2).padStart(8, '0').split('').map(Number);
+}
+
+function bitKeByte(bit) {
+  return parseInt(bit.join(''), 2);
+}
+
+function periksaMasukanCbc(data, iv) {
+  if (!Buffer.isBuffer(data)) {
+    throw new TypeError('Data harus berupa Buffer');
+  }
+  if (!Buffer.isBuffer(iv) || iv.length !== 1) {
+    throw new Error('IV harus berupa Buffer sepanjang 1 byte');
+  }
+}
+
+// Mode CBC: C[i] = E(P[i] XOR C[i-1]), dengan C[0] = IV.
+// Blok S-DES hanya 1 byte, jadi tidak perlu padding.
+function cbcEncrypt(data, kunci, iv) {
+  periksaMasukanCbc(data, iv);
+  const { k1, k2 } = buatSubkunci(terimaBit(kunci, 10));
+
+  const hasil = Buffer.alloc(data.length);
+  let sebelumnya = byteKeBit(iv[0]);
+  for (let i = 0; i < data.length; i++) {
+    const dicampur = xor(byteKeBit(data[i]), sebelumnya);
+    sebelumnya = prosesBlok(dicampur, k1, k2);
+    hasil[i] = bitKeByte(sebelumnya);
+  }
+  return hasil;
+}
+
+// Kebalikannya: P[i] = D(C[i]) XOR C[i-1]
+function cbcDecrypt(data, kunci, iv) {
+  periksaMasukanCbc(data, iv);
+  const { k1, k2 } = buatSubkunci(terimaBit(kunci, 10));
+
+  const hasil = Buffer.alloc(data.length);
+  let sebelumnya = byteKeBit(iv[0]);
+  for (let i = 0; i < data.length; i++) {
+    const blokCipher = byteKeBit(data[i]);
+    const terdekripsi = prosesBlok(blokCipher, k2, k1);
+    hasil[i] = bitKeByte(xor(terdekripsi, sebelumnya));
+    sebelumnya = blokCipher;
+  }
+  return hasil;
+}
+
 module.exports = {
   P10, P8, IP, IP_INV, EP, P4, S0, S1,
   bitDariString,
@@ -140,4 +191,6 @@ module.exports = {
   fungsiF,
   enkripsiBlok,
   dekripsiBlok,
+  cbcEncrypt,
+  cbcDecrypt,
 };
