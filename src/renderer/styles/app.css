@@ -1,0 +1,61 @@
+label {
+  display: block;
+  margin: 16px 0 6px;
+  font-size: 14px;
+  color: #c3c9d6;
+}
+
+input[type="text"],
+textarea {
+  width: 100%;
+  max-width: 720px;
+  padding: 10px 12px;
+  background: #0c0f15;
+  border: 1px solid #2a3142;
+  border-radius: 6px;
+  color: #e6e9ef;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 14px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.baris-tombol {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+button.aksi.sekunder {
+  background: #2a3142;
+}
+
+button.aksi.sekunder:hover {
+  background: #38425a;
+}
+
+.status {
+  margin: 12px 0 0;
+  min-height: 20px;
+  font-size: 14px;
+}
+
+.status.sukses {
+  color: #9fe3b2;
+}
+
+.status.galat {
+  color: #ff8f8f;
+}
+
+details.rincian {
+  margin-top: 20px;
+  max-width: 720px;
+}
+
+details.rincian summary {
+  cursor: pointer;
+  color: #c3c9d6;
+}
