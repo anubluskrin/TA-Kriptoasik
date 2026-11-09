@@ -12,47 +12,47 @@ Dokumen ini adalah **peta jalan** pengerjaan proyek, dari komputer kosong sampai
    - **Pasang apa:** bila perlu, lengkap dengan cara instalasi.
    - **Langkah:** urutan yang dikerjakan.
    - **Kode:** potongan kode secukupnya.
-   - **Cara cek berhasil:** bagaimana kamu tahu step ini selesai.
+   - **Cara cek berhasil:** apa yang harus terlihat di aplikasi.
    - **Kalau error:** kesalahan yang paling sering muncul.
-3. Kalau ada yang tidak dipahami, bilang **"bingung"** dan aku jelaskan ulang dengan cara lebih sederhana.
-4. Kalau ada error, tempel pesan error-nya. Aku akan menunjukkan **file mana, bagian mana, dan sebelum/sesudahnya**, tanpa memberi ulang seluruh file.
-5. Setelah step berhasil, **commit ke Git** (`git commit -m "step 1.2: vigenere"`), baru lanjut.
-6. Kita **tidak melompati step**. Urutan sengaja dibuat supaya setiap step punya dasar yang sudah teruji.
+3. **Tanpa berkas tes.** Setiap step langsung membangun program inti, dan hasilnya dicek dengan menjalankan aplikasi (`npm start`) lalu melihat layar. Untuk algoritma kriptografi, aku berikan **nilai contoh baku** (misalnya `ATTACKATDAWN` + `LEMON` = `LXFOPVEFRNHR`) yang bisa kamu ketik sendiri di aplikasi dan cocokkan hasilnya.
+4. **Tanpa emoticon** di kode, komentar, teks tampilan, maupun dokumen proyek.
+5. Kalau ada yang tidak dipahami, bilang **"bingung"** dan aku jelaskan ulang dengan cara lebih sederhana.
+6. Kalau ada error, tempel pesan error-nya. Aku akan menunjukkan **file mana, bagian mana, dan sebelum/sesudahnya**, tanpa memberi ulang seluruh file.
+7. Setelah step berhasil, **commit ke Git** (`git commit -m "step 1.3: kerangka aplikasi"`), baru lanjut.
+8. Kita **tidak melompati step**.
 
 ---
 
 ## 2. Gambaran Besar
 
 ```
-FASE 0  Persiapan + uji risiko        → pastikan webcam, flashdisk, 2 laptop bisa dipakai
-FASE 1  Fondasi kriptografi (tanpa UI) → semua algoritma jalan dan lulus tes
-FASE 2  Kerangka Electron + database   → aplikasi bisa dibuka dan menyimpan data
-FASE 3  Login 3 faktor                 → dongle + password + wajah
-FASE 4  Fitur utama                    → kontak, pesan, file, gambar, blockchain
-FASE 5  Relay jaringan (opsional)      → komunikasi langsung antar laptop
-FASE 6  Integrasi, uji, laporan, demo
+FASE 0  Persiapan + uji risiko                (SELESAI)
+FASE 1  Kerangka aplikasi + algoritma teks    → Vigenere, S-DES, super enkripsi langsung di aplikasi
+FASE 2  Fitur kripto lain di aplikasi         → file, steganografi, blockchain (kunci diisi manual dulu)
+FASE 3  Database + login 3 faktor             → SQLite, password, dongle, wajah, sesi
+FASE 4  Kontak dan komunikasi antar laptop    → passphrase bersama, amplop ber-MAC, tukar berkas
+FASE 5  Relay jaringan (opsional)             → komunikasi langsung lewat WebSocket
+FASE 6  Integrasi, uji manual, laporan, demo
 ```
 
-**Prinsip urutan:** kriptografi dikerjakan **sebelum** UI. Algoritma lebih mudah dites sendirian dengan `vitest`, dan kalau sudah benar, UI tinggal memanggilnya.
+**Prinsip urutan:** setiap fitur dibuat sebagai **halaman di aplikasi** sejak awal, dengan kunci diisi manual. Dengan begitu hasilnya langsung terlihat tanpa tes terpisah, dan halaman-halaman itu nanti tetap berguna sebagai bahan demonstrasi algoritma saat presentasi. Fitur login dan kunci turunan dipasang setelahnya, membungkus fitur yang sudah jalan.
 
 ---
 
 ## 3. Daftar Instalasi
 
-Semua dipasang **saat step-nya tiba**, lengkap dengan caranya. Ini hanya gambaran awal.
+Semua dipasang **saat step-nya tiba**, lengkap dengan caranya.
 
 | Alat | Dipakai mulai | Catatan singkat |
 |---|---|---|
-| **Node.js LTS** | Step 0.1 | Unduh installer dari nodejs.org, pilih versi LTS. Cek dengan `node -v` |
-| **Git** | Step 0.1 | Unduh dari git-scm.com. GitHub Desktop yang sudah kamu punya tidak otomatis menyediakan perintah `git` di terminal |
-| **VS Code** | Sudah ada | Editor utama |
-| **Electron** | Step 0.3 | Lewat `npm install`, tidak perlu installer terpisah |
-| **vitest** | Step 1.1 | Lewat `npm install` |
-| **better-sqlite3** + **@electron/rebuild** | Step 2.3 | Lewat `npm install`. Bila gagal kompilasi, perlu *Visual Studio Build Tools* (dijelaskan saat itu) |
-| **pngjs** | Step 1.12 | Lewat `npm install` |
+| **Node.js LTS**, **Git**, **VS Code** | Sudah ada | |
+| **Electron** | Sudah ada | |
+| **vitest** | Sudah terpasang (Step 1.1) | Tidak dipakai lagi. Dibiarkan saja |
+| **ws** | Sudah ada (Step 0.6) | Dipakai di Fase 5 |
+| **pngjs** | Step 2.2 | Lewat `npm install` |
+| **better-sqlite3** + **@electron/rebuild** | Step 3.1 | Lewat `npm install`. Bila gagal kompilasi, perlu *Visual Studio Build Tools* (dijelaskan saat itu) |
 | **@vladmandic/human** | Step 3.6 | Lewat `npm install`, plus berkas model |
-| **drivelist**, **ws** | Step 3.1 dan 0.6 | Lewat `npm install` |
-| **PowerShell** | Step 0.5 | Sudah ada di Windows |
+| **drivelist** | Step 3.4 | Lewat `npm install` |
 
 ---
 
@@ -60,98 +60,83 @@ Semua dipasang **saat step-nya tiba**, lengkap dengan caranya. Ini hanya gambara
 
 Estimasi waktu hanya perkiraan kasar untuk satu orang; sesuaikan dengan jadwal tim.
 
-### FASE 0: Persiapan dan Uji Risiko (±2-3 hari)
+### FASE 0: Persiapan dan Uji Risiko (SELESAI)
 
-Tujuan fase ini: memastikan tiga hal yang paling berisiko **benar-benar bisa** di laptop demo, sebelum kita membangun apa pun.
+| Step | Hasil |
+|---|---|
+| 0.1-0.3 | Node.js, Git, proyek, dan Electron beres |
+| 0.4 | Webcam di Electron beres |
+| 0.5 | Serial flashdisk SanDisk terbaca |
+| 0.6 | Koneksi WebSocket dua laptop beres (port 8765) |
 
-| Step | Yang dikerjakan | Cara cek berhasil | Pasang |
-|---|---|---|---|
-| 0.1 | Pasang Node.js LTS dan Git | `node -v`, `npm -v`, `git --version` tampil | Node.js, Git |
-| 0.2 | Buat folder proyek, `git init`, `npm init`, `.gitignore` | Ada `package.json`, commit pertama tercatat | - |
-| 0.3 | Pasang Electron, tampilkan jendela kosong | `npm start` membuka jendela | electron |
-| 0.4 | **Uji risiko 1:** buka webcam di jendela Electron | Video webcam tampil | - |
-| 0.5 | **Uji risiko 2:** baca serial number flashdisk lewat PowerShell | Serial flashdisk tercetak di terminal | - |
-| 0.6 | **Uji risiko 3:** dua laptop saling kirim "ping" lewat hotspot | Laptop B menerima pesan dari laptop A | ws, butuh laptop kedua |
+### FASE 1: Kerangka Aplikasi dan Algoritma Teks (±1 minggu)
 
-**Jika salah satu uji gagal**, kita putuskan solusinya di sini (lihat bagian 7).
-
-### FASE 1: Fondasi Kriptografi (±1,5 minggu)
-
-Semua di folder `src/main/crypto/` dan `src/main/security/`, **tanpa UI**, diuji dengan `vitest`.
-
-| Step | Yang dikerjakan | Cara cek berhasil |
+| Step | Yang dikerjakan | Cara cek berhasil di aplikasi |
 |---|---|---|
-| 1.1 | Siapkan `vitest` dan struktur folder `crypto/`, `tests/` | `npm test` jalan (walau belum ada tes) |
-| 1.2 | `vigenere.js` (mod 95) | Tes: enkripsi lalu dekripsi kembali ke teks asal |
-| 1.3 | `sdes.js` bagian 1: tabel permutasi, pembangkit subkunci K1 dan K2 | Tes subkunci sesuai hitungan manual |
-| 1.4 | `sdes.js` bagian 2: enkripsi/dekripsi satu blok | **Vektor uji:** K=1010000010, P=01110010 → C=01110111 |
-| 1.5 | `sdes.js` bagian 3: mode CBC | Round-trip lulus, IV berbeda menghasilkan ciphertext berbeda |
-| 1.6 | `superCipher.js` (Vigenère lalu S-DES) | Round-trip teks, termasuk emoji dan baris baru |
-| 1.7 | `keys.js`: PBKDF2, subkey, kunci percakapan | Input sama → kunci sama; input beda → kunci beda |
-| 1.8 | `password.js`: hash dan verifikasi password | Password benar lolos, salah ditolak |
-| 1.9 | `dbCipher.js`: ChaCha20-Poly1305 | Round-trip lulus, ubah 1 byte → ditolak |
-| 1.10 | `fileCipher.js`: AES-256-GCM per chunk, format `.svlt` | File kecil dan besar kembali identik; file diubah → ditolak |
-| 1.11 | `envelope.js`: amplop pesan + MAC | MAC salah ditolak; `seq` ulang ditolak |
-| 1.12 | `stego.js`: LSB + PSNR | Pesan tersisip dan terekstrak identik; PSNR > 40 dB |
-| 1.13 | `block.js` dan `chain.js`: blok, PoW, validasi rantai | Ubah 1 blok → validasi menunjuk blok rusak |
+| 1.1 | Setup vitest | **Selesai** |
+| 1.2 | Modul `vigenere.js` (mod 26) | **Selesai** |
+| 1.3 | Kerangka aplikasi: susun folder `src/main`, `src/preload`, `src/renderer`; preload aman; satu kanal IPC; tampilan dengan menu samping | Jendela punya menu samping, dan tombol uji memanggil proses main lalu menampilkan balasan |
+| 1.4 | Halaman **Vigenère**: isi teks dan kunci, tombol enkripsi dan dekripsi | `ATTACKATDAWN` + `LEMON` menghasilkan `LXFOPVEFRNHR`, dan dekripsi mengembalikannya |
+| 1.5 | Modul `sdes.js` bagian 1: tabel permutasi dan pembangkit subkunci K1, K2. Halaman **S-DES** menampilkan subkunci | Kunci contoh menampilkan K1 dan K2 sesuai nilai yang kuberikan |
+| 1.6 | `sdes.js` bagian 2: enkripsi dan dekripsi satu blok | Kunci `1010000010`, plaintext `01110010` menghasilkan `01110111`, dan dekripsi mengembalikannya |
+| 1.7 | `sdes.js` bagian 3: mode CBC | Teks pendek terenkripsi lalu terdekripsi; IV berbeda menghasilkan ciphertext berbeda |
+| 1.8 | Halaman **Pesan Teks**: super enkripsi (Vigenère lalu S-DES lalu Base64), kunci diisi manual | Pesan dengan huruf beraksen dan baris baru kembali identik setelah dekripsi |
 
-### FASE 2: Kerangka Electron dan Database (±3-4 hari)
+### FASE 2: Fitur Kripto Lain di Aplikasi (±1 minggu)
 
-| Step | Yang dikerjakan | Cara cek berhasil |
+Kunci diisi manual (passphrase) dulu. Integrasi dengan login dilakukan di Fase 3.
+
+| Step | Yang dikerjakan | Cara cek berhasil di aplikasi |
 |---|---|---|
-| 2.1 | Susun `src/main`, `src/preload`, `src/renderer`; konfigurasi aman (`contextIsolation`, CSP) | Jendela terbuka dengan konfigurasi aman |
-| 2.2 | Preload + satu kanal IPC percobaan (`ping`) | Tombol di UI memanggil main dan menampilkan balasan |
-| 2.3 | Pasang `better-sqlite3` + `@electron/rebuild`, buat `schema.sql` | Berkas database terbentuk dengan semua tabel |
-| 2.4 | `repositories.js` untuk tabel `users` | Bisa menambah dan membaca user lewat kode |
-| 2.5 | Mode `--setup`: buat akun admin pertama | `npm run setup` membuat user di database |
+| 2.1 | `keys.js` (PBKDF2, subkunci) + halaman **File**: enkripsi dan dekripsi file dengan AES-256-GCM (format `.svlt`) | File terenkripsi lalu terbuka kembali identik; file yang diubah ditolak |
+| 2.2 | Halaman **Gambar**: steganografi LSB pada PNG dan tampilan PSNR | Pesan tersisip dan terekstrak; PSNR di atas 40 dB |
+| 2.3 | Halaman **Aset**: blockchain (blok, proof-of-work di `worker_threads`, validasi rantai) | Register dan transfer aset berjalan; data blok diubah, validasi menunjuk blok rusak |
 
-### FASE 3: Login 3 Faktor (±1,5 minggu)
+### FASE 3: Database dan Login 3 Faktor (±1,5 minggu)
 
-| Step | Yang dikerjakan | Cara cek berhasil |
+| Step | Yang dikerjakan | Cara cek berhasil di aplikasi |
 |---|---|---|
-| 3.1 | `dongle.js`: daftar flashdisk + baca serial | Aplikasi mengenali flashdisk yang dicolok |
-| 3.2 | Enrollment dongle: tulis `.svkey`, simpan `dongle_tag` | File `.svkey` muncul di flashdisk |
-| 3.3 | Verifikasi dongle + pemantau pencabutan | Cabut flashdisk → aplikasi terkunci |
-| 3.4 | Login password (UI + IPC) | Password benar masuk, salah ditolak |
-| 3.5 | `lockout.js`: kunci sementara setelah 3 kali gagal | Percobaan ke-3 mengunci akun |
+| 3.1 | Pasang `better-sqlite3` + `@electron/rebuild`, buat `schema.sql` dan akses tabel `users` | Berkas database terbentuk dengan semua tabel |
+| 3.2 | Mode `--setup`: buat akun admin dengan password ter-hash (`password.js`, PBKDF2) | `npm run setup` membuat user di database |
+| 3.3 | Halaman **Login** (password) + penguncian sementara setelah 3 kali gagal | Password benar masuk, salah ditolak, percobaan ke-3 mengunci akun |
+| 3.4 | `dongle.js`: daftar flashdisk dan baca serial | Aplikasi menampilkan flashdisk yang dicolok |
+| 3.5 | Enrollment dongle (tulis `.svkey`, simpan `dongle_tag`), verifikasi, dan pemantau pencabutan | Cabut flashdisk, aplikasi terkunci |
 | 3.6 | `faceCapture.js`: webcam + Human menghasilkan embedding | Satu wajah menghasilkan vektor angka |
-| 3.7 | Daftar wajah (enroll) + verifikasi, kalibrasi ambang | Wajah sendiri lolos, wajah lain ditolak |
-| 3.8 | `session.js`: master key, penghapusan kunci saat logout | Setelah logout, kunci di memori terhapus |
-| 3.9 | Gabungkan alur: dongle → password → wajah → dashboard | Tiga faktor berjalan berurutan |
+| 3.7 | Daftar wajah (enroll) dan verifikasi, kalibrasi ambang | Wajah sendiri lolos, wajah lain ditolak |
+| 3.8 | `session.js`: master key, penghapusan kunci saat logout, dan gerbang login (dongle, password, wajah) yang membungkus semua halaman | Tiga faktor berjalan berurutan; tanpa login halaman fitur tidak bisa dibuka |
+| 3.9 | `dbCipher.js` (ChaCha20-Poly1305): simpan pesan penting terenkripsi di database | Pesan penting di database tampil sebagai teks acak; terbuka kembali di aplikasi |
 
-### FASE 4: Fitur Utama (±1,5 minggu)
+### FASE 4: Kontak dan Komunikasi Antar Laptop (±1 minggu)
 
-| Step | Yang dikerjakan | Cara cek berhasil |
+| Step | Yang dikerjakan | Cara cek berhasil di aplikasi |
 |---|---|---|
-| 4.1 | Kerangka Dashboard dan navigasi | Menu ke semua fitur tampil |
-| 4.2 | Kontak + percakapan: masukkan passphrase, tampilkan **kode cek kunci** | Dua laptop (atau dua akun) menampilkan kode yang sama |
-| 4.3 | Kirim dan baca pesan teks, tandai "penting" | Pesan tersimpan terenkripsi; pesan penting dibungkus ChaCha20 |
-| 4.4 | Ekspor/impor `.svmsg` (komunikasi Tahap 1) | Pesan dari laptop A terbaca di laptop B |
-| 4.5 | UI enkripsi/dekripsi file | File terenkripsi dan terbuka kembali |
-| 4.6 | UI steganografi + tampilan PSNR | Pesan tersisip di PNG dan terekstrak |
-| 4.7 | UI blockchain + mining di `worker_threads` | Register dan transfer aset; tombol "Validasi Rantai" |
-| 4.8 | Ekspor/impor rantai (`.svchain`) | Rantai laptop A bisa diimpor laptop B |
+| 4.1 | Kontak dan percakapan: masukkan passphrase, tampilkan **kode cek kunci** | Dua laptop menampilkan kode yang sama |
+| 4.2 | `envelope.js`: amplop pesan ber-MAC | Pesan dengan passphrase salah atau yang diubah ditolak dengan alasan jelas |
+| 4.3 | Kirim dan baca pesan teks antar pengguna, tandai "penting" | Pesan tersimpan di database dan tampil di daftar |
+| 4.4 | Ekspor dan impor `.svmsg` (komunikasi Tahap 1) | Pesan dari laptop A terbaca di laptop B |
+| 4.5 | Kirim file dan gambar stego ke kontak dengan kunci percakapan | File dan gambar dari laptop A terbuka di laptop B |
+| 4.6 | Ekspor dan impor rantai (`.svchain`) | Rantai laptop A bisa diimpor laptop B |
 
 ### FASE 5: Relay Jaringan (opsional, ±3-4 hari)
 
 Dikerjakan hanya bila Fase 0-4 sudah stabil.
 
-| Step | Yang dikerjakan | Cara cek berhasil |
+| Step | Yang dikerjakan | Cara cek berhasil di aplikasi |
 |---|---|---|
 | 5.1 | `server/relay.js` (simpan-dan-teruskan) | Dua client terhubung, relay meneruskan pesan |
-| 5.2 | `relayClient.js`: outbox + auto-reconnect | Relay dimatikan lalu dihidupkan → pesan tertunda terkirim |
+| 5.2 | `relayClient.js`: outbox dan sambung ulang otomatis | Relay dimatikan lalu dihidupkan, pesan tertunda terkirim |
 | 5.3 | Sinkronisasi rantai lewat relay | Blok baru di laptop A muncul di laptop B |
 
-### FASE 6: Integrasi, Uji, Laporan, Demo (±1 minggu)
+### FASE 6: Integrasi, Uji Manual, Laporan, Demo (±1 minggu)
 
 | Step | Yang dikerjakan | Cara cek berhasil |
 |---|---|---|
 | 6.1 | Uji alur penuh di dua laptop | Skenario demo berjalan tanpa error |
-| 6.2 | Uji serangan (tabel pengujian di `README_JS.md` bagian 15) | Semua baris tabel terpenuhi |
+| 6.2 | Uji serangan secara manual (tabel pengujian di `README_JS.md` bagian 15) | Semua baris tabel terpenuhi |
 | 6.3 | Periksa daftar keamanan Electron | Semua poin di bagian 5 README terpenuhi |
 | 6.4 | (Opsional) bungkus jadi installer dengan `electron-builder` | Aplikasi jalan tanpa `npm start` |
 | 6.5 | Tulis laporan | Sesuai kerangka bagian 18 README |
-| 6.6 | Latihan demo + rencana cadangan | Demo bisa dijalankan dua kali berturut-turut tanpa masalah |
+| 6.6 | Latihan demo dan rencana cadangan | Demo bisa dijalankan dua kali berturut-turut tanpa masalah |
 
 ---
 
@@ -159,15 +144,15 @@ Dikerjakan hanya bila Fase 0-4 sudah stabil.
 
 | Kriteria di slide | Dipenuhi di step |
 |---|---|
-| Login biometrik + hanya hidup dengan dongle | 3.1-3.3, 3.6-3.7, 3.9 |
-| Login memakai algoritma kriptografi | 1.8, 3.4 |
-| Pesan teks: super enkripsi (Vigenère + S-DES) | 1.2-1.6, 4.3 |
-| Pesan file: kriptografi beda dari teks | 1.10, 4.5 |
-| Pesan penting dienkripsi di basis data | 1.9, 4.3 |
-| Pesan gambar: steganografi | 1.12, 4.6 |
-| Aset penting: blockchain sederhana | 1.13, 4.7-4.8 |
+| Login biometrik + hanya hidup dengan dongle | 3.4-3.8 |
+| Login memakai algoritma kriptografi | 3.2-3.3 |
+| Pesan teks: super enkripsi (Vigenère + S-DES) | 1.2-1.8, 4.3 |
+| Pesan file: kriptografi beda dari teks | 2.1, 4.5 |
+| Pesan penting dienkripsi di basis data | 3.9, 4.3 |
+| Pesan gambar: steganografi | 2.2, 4.5 |
+| Aset penting: blockchain sederhana | 2.3, 4.6 |
 | Laporan dan presentasi | 6.5-6.6 |
-| (Tambahan tim) Komunikasi 2 arah antar laptop | 1.7, 1.11, 4.2, 4.4, Fase 5 |
+| (Tambahan tim) Komunikasi 2 arah antar laptop | 4.1-4.4, Fase 5 |
 
 ---
 
@@ -175,11 +160,11 @@ Dikerjakan hanya bila Fase 0-4 sudah stabil.
 
 | Minggu | Isi |
 |---|---|
-| 1 | Fase 0 dan Step 1.1-1.6 |
-| 2 | Step 1.7-1.13 dan Fase 2 |
-| 3 | Step 3.1-3.5 (dongle dan password) |
-| 4 | Step 3.6-3.9 (wajah, sesi) dan Step 4.1-4.3 |
-| 5 | Step 4.4-4.8 dan Fase 5 bila sempat |
+| 1 | Fase 0 (selesai) dan Fase 1 |
+| 2 | Fase 2 dan awal Fase 3 (3.1-3.3) |
+| 3 | Step 3.4-3.5 (dongle) dan 3.6-3.7 (wajah) |
+| 4 | Step 3.8-3.9 dan Fase 4 |
+| 5 | Sisa Fase 4 dan Fase 5 bila sempat |
 | 6 | Fase 6 |
 
 Tanggal UAS dan jadwal presentasi belum kita masukkan. Setelah kamu tahu tanggalnya, jadwal ini kita sesuaikan.
@@ -190,25 +175,20 @@ Tanggal UAS dan jadwal presentasi belum kita masukkan. Setelah kamu tahu tanggal
 
 | Risiko | Gejala | Rencana cadangan |
 |---|---|---|
-| Webcam/wajah bermasalah | Step 0.4 atau 3.6 gagal | Coba library wajah lain; cadangan terakhir: biometrik *keystroke dynamics* (ritme mengetik), tanpa hardware |
-| Serial flashdisk tidak terbaca | Step 0.5 gagal | Pakai *volume serial number* (`vol E:`) sebagai pengganti, catat sebagai batasan |
-| `better-sqlite3` gagal dipasang | Error kompilasi di Step 2.3 | Pasang Visual Studio Build Tools; bila tetap gagal, kita bahas alternatif SQLite lain saat itu |
-| Dua laptop tidak bisa terhubung | Step 0.6 gagal | Pakai hotspot HP; cadangan: komunikasi Tahap 1 (tukar berkas `.svmsg`) |
-| Waktu mepet | Jadwal tertinggal | Urutan dipotong dari belakang: relay (Fase 5) → anti-spoofing wajah → sinkronisasi rantai. Kriteria wajib dari dosen tetap dikerjakan |
+| Wajah sulit dikenali | Step 3.6 atau 3.7 tidak stabil | Coba library wajah lain; cadangan terakhir: biometrik *keystroke dynamics* (ritme mengetik), tanpa hardware |
+| Serial flashdisk tidak andal | Serial kosong atau sama antar unit | Pakai *volume serial number* sebagai pengganti, catat sebagai batasan |
+| `better-sqlite3` gagal dipasang | Error kompilasi di Step 3.1 | Pasang Visual Studio Build Tools; bila tetap gagal, kita bahas alternatif SQLite lain saat itu |
+| Dua laptop tidak bisa terhubung | Pesan tidak sampai | Pakai hotspot HP; cadangan: komunikasi Tahap 1 (tukar berkas `.svmsg`) |
+| Algoritma salah tanpa terdeteksi | Hasil tampak benar tapi menyimpang | Selalu cocokkan dengan nilai contoh baku yang diberikan di tiap step; jalankan tabel uji manual di Step 6.2 |
+| Waktu mepet | Jadwal tertinggal | Urutan dipotong dari belakang: relay (Fase 5), anti-spoofing wajah, sinkronisasi rantai. Kriteria wajib dari dosen tetap dikerjakan |
 
 ---
 
 ## 8. Aturan Git Sederhana
 
 - Satu folder proyek, satu repository.
-- **Satu commit per step**, pesan singkat: `step 1.2: vigenere`.
-- Kalau bekerja bertiga: buat branch per anggota (`git checkout -b nama-fitur`), gabungkan ke `main` lewat GitHub Desktop setelah tes lulus.
-- Jangan pernah commit: folder `node_modules/`, folder `data/`, berkas `.svkey`, dan database `.db`. Semuanya masuk `.gitignore` di Step 0.2.
+- **Satu commit per step**, pesan singkat: `step 1.3: kerangka aplikasi`.
+- Kalau bekerja bertiga: buat branch per anggota (`git checkout -b nama-fitur`), gabungkan ke `main` lewat GitHub Desktop setelah hasilnya dicek di aplikasi.
+- Jangan pernah commit: folder `node_modules/`, folder `data/`, berkas `.svkey`, dan database `.db`. Semuanya sudah ada di `.gitignore`.
 
 ---
-
-## 9. Mulai dari Mana?
-
-**Step 0.1: Pasang Node.js LTS dan Git.**
-
-Bilang **"lanjut"** dan aku kirim Step 0.1.
