@@ -1,6 +1,8 @@
 const { app, BrowserWindow, session } = require('electron');
 const path = require('node:path');
 const { daftarkanSemuaIpc } = require('./ipc');
+const db = require('./db/db');
+const session = require('./auth/session');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -18,6 +20,8 @@ function createWindow() {
 
 app.whenReady().then(() => {
   // Daftarkan semua kanal IPC sebelum jendela dibuat
+    // Buka basis data lalu daftarkan semua kanal IPC sebelum jendela dibuat
+  db.buka(path.join(app.getPath('userData'), 'securevault.db'));
   daftarkanSemuaIpc();
 
   // Hanya izinkan akses kamera/mikrofon (tipe 'media'), tolak izin lain
@@ -37,4 +41,9 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('before-quit', () => {
+  session.akhiri();
+  db.tutup();
 });

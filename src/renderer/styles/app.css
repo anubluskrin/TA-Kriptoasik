@@ -75,6 +75,7 @@ label {
 }
 
 input[type="text"],
+input[type="password"]
 textarea {
   width: 100%;
   max-width: 720px;
@@ -162,4 +163,53 @@ video {
   margin-top: 12px;
   background: #000;
   border-radius: 6px;
+}
+
+/* Layar login */
+.layar-login {
+  display: none;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+body.terkunci .layar-login {
+  display: flex;
+}
+
+body.terkunci .sidebar,
+body.terkunci .konten {
+  display: none;
+}
+
+.kartu-login {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  background: #0c0f15;
+  border: 1px solid #2a3142;
+  border-radius: 10px;
+}
+
+.kartu-login input {
+  max-width: none;
+}
+
+.pengguna {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #2a3142;
+}
+
+.nama-pengguna {
+  margin: 0 8px 8px;
+  font-size: 13px;
+  color: #9aa3b5;
+  word-break: break-all;
+}
+
+h2 {
+  margin: 28px 0 0;
+  font-size: 17px;
 }

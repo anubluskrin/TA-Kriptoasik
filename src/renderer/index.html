@@ -6,7 +6,31 @@
   <title>SecureVault</title>
   <link rel="stylesheet" href="styles/app.css" />
 </head>
-<body>
+<body class="terkunci">
+
+  <section id="layar-login" class="layar-login">
+    <div class="kartu-login">
+      <h1 id="login-judul">Masuk</h1>
+      <p id="login-keterangan"></p>
+
+      <label for="login-username">Username</label>
+      <input id="login-username" type="text" autocomplete="off" />
+
+      <label for="login-password">Password</label>
+      <input id="login-password" type="password" autocomplete="off" />
+
+      <div id="login-baris-ulang">
+        <label for="login-ulang">Ulangi password</label>
+        <input id="login-ulang" type="password" autocomplete="off" />
+      </div>
+
+      <div class="baris-tombol">
+        <button id="login-tombol" class="aksi">Masuk</button>
+      </div>
+      <p id="login-status" class="status"></p>
+    </div>
+  </section>
+
   <aside class="sidebar">
     <div class="brand">SecureVault</div>
     <nav>
@@ -14,9 +38,15 @@
       <button class="menu-item" data-page="pesan">Pesan Teks</button>
       <button class="menu-item" data-page="file">File</button>
       <button class="menu-item" data-page="gambar">Gambar</button>
-      <button class="menu-item" data-page="aset">Aset</button>
+            <button class="menu-item" data-page="aset">Aset</button>
+      <button class="menu-item" data-page="arsip">Pesan Penting</button>
       <button class="menu-item" data-page="webcam">Uji Webcam</button>
     </nav>
+
+    <div class="pengguna">
+      <p id="nama-pengguna" class="nama-pengguna"></p>
+      <button id="btn-keluar" class="menu-item">Keluar</button>
+    </div>
   </aside>
 
   <main class="konten">
@@ -152,6 +182,35 @@
 
       <h2>Isi rantai</h2>
       <pre id="aset-rantai" class="keluaran"></pre>
+    </section>
+
+        <!-- Pesan Penting -->
+    <section id="page-arsip" class="page">
+      <h1>Pesan Penting</h1>
+      <p>Pesan yang disimpan di sini dienkripsi dengan ChaCha20-Poly1305 sebelum masuk ke basis data. Kunci diturunkan dari login, jadi hanya terbuka saat kamu sudah masuk.</p>
+
+      <label for="arsip-label">Label</label>
+      <input id="arsip-label" type="text" autocomplete="off" />
+
+      <label for="arsip-isi">Isi pesan</label>
+      <textarea id="arsip-isi" rows="4"></textarea>
+
+      <div class="baris-tombol">
+        <button id="arsip-simpan" class="aksi">Simpan terenkripsi</button>
+      </div>
+
+      <h2>Tersimpan di basis data</h2>
+      <pre id="arsip-daftar" class="keluaran"></pre>
+
+      <label for="arsip-id">Buka pesan nomor</label>
+      <input id="arsip-id" type="text" inputmode="numeric" autocomplete="off" />
+      <div class="baris-tombol">
+        <button id="arsip-buka" class="aksi sekunder">Buka pesan</button>
+      </div>
+
+      <label for="arsip-hasil">Isi pesan (setelah didekripsi)</label>
+      <textarea id="arsip-hasil" rows="4" readonly></textarea>
+      <p id="arsip-status" class="status"></p>
     </section>
 
     <!-- Uji Webcam (sementara, dipindah dari halaman awal) -->

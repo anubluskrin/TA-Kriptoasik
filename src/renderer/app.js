@@ -239,5 +239,133 @@ document.getElementById('aset-reset').addEventListener('click', () => {
   jalankanAset(() => window.api.asetReset());
 });
 
-// Muat rantai yang tersimpan saat aplikasi dibuka
-jalankanAset(() => window.api.asetStatus());
+// Muat rantai yang tersimpan (dipanggil setelah login berhasil)
+function muatAset() {
+  jalankanAset(() => window.api.asetStatus());
+
+  // Halaman Pesan Penting
+const elArsipLabel = document.getElementById('arsip-label');
+const elArsipIsi = document.getElementById('arsip-isi');
+const elArsipDaftar = document.getElementById('arsip-daftar');
+const elArsipId = document.getElementById('arsip-id');
+const elArsipHasil = document.getElementById('arsip-hasil');
+const elArsipStatus = document.getElementById('arsip-status');
+
+function statusArsip(teks, sukses) {
+  elArsipStatus.textContent = teks;
+  elArsipStatus.className = 'status ' + (sukses ? 'sukses' : 'galat');
+}
+
+async function muatArsip() {
+  const r = await window.api.arsipDaftar();
+  if (!r.ok) {
+    statusArsip('Gagal: ' + r.galat, false);
+    return;
+  }
+  elArsipDaftar.textContent = r.daftar.length
+    ? r.daftar
+        .map((p) => `#${p.id}  ${new Date(p.waktu).toLocaleString('id-ID')}  ${p.label}\n    isi mentah di DB: ${p.cipherHex}...`)
+        .join('\n')
+    : '(belum ada pesan)';
+}
+
+document.getElementById('arsip-simpan').addEventListener('click', async () => {
+  const r = await window.api.arsipSimpan(elArsipLabel.value, elArsipIsi.value);
+  if (!r.ok) {
+    statusArsip('Gagal: ' + r.galat, false);
+    return;
+  }
+  elArsipIsi.value = '';
+  statusArsip('Tersimpan sebagai pesan nomor ' + r.id, true);
+  muatArsip();
+});
+
+document.getElementById('arsip-buka').addEventListener('click', async () => {
+  const r = await window.api.arsipBuka(parseInt(elArsipId.value, 10));
+  if (!r.ok) {
+    elArsipHasil.value = '';
+    statusArsip('Gagal: ' + r.galat, false);
+    return;
+  }
+  elArsipHasil.value = r.pesan.isi;
+  statusArsip('Berhasil dibuka: ' + r.pesan.label, true);
+});
+
+// Login
+const elLoginJudul = document.getElementById('login-judul');
+const elLoginKeterangan = document.getElementById('login-keterangan');
+const elLoginUser = document.getElementById('login-username');
+const elLoginPass = document.getElementById('login-password');
+const elLoginUlang = document.getElementById('login-ulang');
+const elLoginBarisUlang = document.getElementById('login-baris-ulang');
+const elLoginTombol = document.getElementById('login-tombol');
+const elLoginStatus = document.getElementById('login-status');
+let modeDaftar = false;
+
+function aturModeLogin(daftar) {
+  modeDaftar = daftar;
+  elLoginJudul.textContent = daftar ? 'Buat akun' : 'Masuk';
+  elLoginKeterangan.textContent = daftar
+    ? 'Belum ada akun. Buat akun pertama untuk aplikasi ini.'
+    : 'Masukkan username dan password.';
+  elLoginBarisUlang.style.display = daftar ? 'block' : 'none';
+  elLoginTombol.textContent = daftar ? 'Buat akun dan masuk' : 'Masuk';
+}
+
+function masukAplikasi(username) {
+  document.body.classList.remove('terkunci');
+  document.getElementById('nama-pengguna').textContent = 'Masuk sebagai ' + username;
+  elLoginPass.value = '';
+  elLoginUlang.value = '';
+  elLoginStatus.textContent = '';
+  tampilkanHalaman('beranda');
+  muatAset();
+  muatArsip();
+}
+
+async function prosesLogin() {
+  elLoginStatus.className = 'status';
+  elLoginStatus.textContent = 'Memeriksa...';
+
+  if (modeDaftar && elLoginPass.value !== elLoginUlang.value) {
+    elLoginStatus.textContent = 'Gagal: password dan pengulangannya tidak sama';
+    elLoginStatus.className = 'status galat';
+    return;
+  }
+
+  const r = modeDaftar
+    ? await window.api.authDaftar(elLoginUser.value, elLoginPass.value)
+    : await window.api.authMasuk(elLoginUser.value, elLoginPass.value);
+
+  if (!r.ok) {
+    elLoginStatus.textContent = 'Gagal: ' + r.galat;
+    elLoginStatus.className = 'status galat';
+    elLoginPass.value = '';
+    return;
+  }
+  masukAplikasi(r.username);
+}
+
+elLoginTombol.addEventListener('click', prosesLogin);
+[elLoginUser, elLoginPass, elLoginUlang].forEach((el) => {
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') prosesLogin();
+  });
+});
+
+document.getElementById('btn-keluar').addEventListener('click', async () => {
+  await window.api.authKeluar();
+  location.reload(); // membersihkan semua data yang masih tampil di layar
+});
+
+async function periksaStatusLogin() {
+  const s = await window.api.authStatus();
+  if (s.ok && s.masuk) {
+    masukAplikasi(s.username);
+  } else {
+    aturModeLogin(!(s.ok && s.adaAkun));
+  }
+}
+
+periksaStatusLogin();
+}
