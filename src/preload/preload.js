@@ -20,5 +20,15 @@ contextBridge.exposeInMainWorld('api', {
   asetRusakkan: (nomor, nilai) => ipcRenderer.invoke('aset:rusakkan', nomor, nilai),
   asetReset: () => ipcRenderer.invoke('aset:reset'),
 
+  authStatus: () => ipcRenderer.invoke('auth:status'),
+  authDaftar: (username, password) => ipcRenderer.invoke('auth:daftar', username, password),
+  authMasuk: (username, password) => ipcRenderer.invoke('auth:masuk', username, password),
+  authKeluar: () => ipcRenderer.invoke('auth:keluar'),
+  arsipSimpan: (label, isi) => ipcRenderer.invoke('arsip:simpan', label, isi),
+  arsipDaftar: () => ipcRenderer.invoke('arsip:daftar'),
+  arsipBuka: (id) => ipcRenderer.invoke('arsip:buka', id),
+
+  dongleStatus: () => ipcRenderer.invoke('dongle:status'),
+  onDongleDicabut: (pemanggil) => ipcRenderer.on('event:dongle-dicabut', () => pemanggil()),
   
 });

@@ -3,6 +3,7 @@ const db = require('../db/db');
 const session = require('./session');
 const { buatHash, cocok } = require('./password');
 const { turunkanKunci } = require('../crypto/keys');
+const dongle = require('../security/dongle');
 
 const MAKS_GAGAL = 3;
 const JEDA_KUNCI_MS = 60 * 1000;
@@ -29,13 +30,15 @@ async function daftar(username, password) {
   periksaPassword(password);
   if (adaAkun()) throw new Error('Akun sudah ada, pendaftaran ditutup');
 
+  const dg = await dongle.daftarkan(); // menulis .svkey ke flashdisk
   const h = await buatHash(password);
   const kdfSalt = crypto.randomBytes(16).toString('hex');
   db.ambil()
     .prepare(
-      'INSERT INTO users (username, pw_salt, pw_hash, pw_iterasi, kdf_salt, dibuat) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO users (username, pw_salt, pw_hash, pw_iterasi, kdf_salt, dongle_tag, dibuat) VALUES (?, ?, ?, ?, ?, ?, ?)'
     )
-    .run(username, h.salt, h.hash, h.iterasi, kdfSalt, Date.now());
+    .run(username, h.salt, h.hash, h.iterasi, kdfSalt, dg.tag, Date.now());
+  dg.secret.fill(0);
 }
 
 async function masuk(username, password) {
@@ -57,7 +60,12 @@ async function masuk(username, password) {
     throw new Error(`Akun terkunci sementara. Coba lagi dalam ${detik} detik`);
   }
 
+    // Faktor 1: dongle. Gagal di sini tidak dihitung sebagai salah password.
+  const dg = await dongle.verifikasi(user.dongle_tag);
+  if (!dg) throw new Error('Flashdisk dongle tidak terpasang atau bukan dongle akun ini');
+
   const benar = await cocok(password, { salt: user.pw_salt, hash: user.pw_hash, iterasi: user.pw_iterasi });
+  
   if (!benar) {
     const gagal = user.gagal + 1;
     if (gagal >= MAKS_GAGAL) {
@@ -70,8 +78,15 @@ async function masuk(username, password) {
   }
 
   dbAktif.prepare('UPDATE users SET gagal = 0, kunci_sampai = 0 WHERE id = ?').run(user.id);
-  const kunciMaster = await turunkanKunci(password, Buffer.from(user.kdf_salt, 'hex'));
-  session.mulai({ id: user.id, username: user.username }, kunciMaster);
+
+    // Kunci master memerlukan password DAN rahasia di dongle
+  const gabungan = password + '\u0000' + dg.secret.toString('hex');
+  const kunciMaster = await turunkanKunci(gabungan, Buffer.from(user.kdf_salt, 'hex'));
+  session.mulai(
+    { id: user.id, username: user.username, dongle: { drive: dg.drive, serial: dg.serial } },
+    kunciMaster
+  );
+  dg.secret.fill(0);
 }
 
 function keluar() {

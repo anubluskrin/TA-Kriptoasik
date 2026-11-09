@@ -27,6 +27,7 @@ const fileIpc = require('./file.ipc');
 const gambarIpc = require('./gambar.ipc');
 const asetIpc = require('./aset.ipc');
 const arsipIpc = require('./arsip.ipc');
+const dongleIpc = require('./dongle.ipc');
 const { daftarkanDenganGerbang } = require('./gerbang');
 
 function daftarkanSemuaIpc() {
@@ -39,6 +40,7 @@ function daftarkanSemuaIpc() {
     gambarIpc.daftarkan();
     asetIpc.daftarkan();
     arsipIpc.daftarkan();
+    dongleIpc.daftarkan();
   });
 }
 

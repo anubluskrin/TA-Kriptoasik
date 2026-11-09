@@ -2,7 +2,7 @@ const { ipcMain } = require('electron');
 const session = require('../auth/session');
 
 // Kanal yang boleh dipanggil sebelum login
-const TERBUKA = new Set(['app:ping', 'auth:status', 'auth:daftar', 'auth:masuk', 'auth:keluar']);
+const TERBUKA = new Set(['app:ping', 'auth:status', 'auth:daftar', 'auth:masuk', 'auth:keluar', 'dongle:status']);
 
 // Menjalankan `daftarkanSemua` dengan ipcMain.handle yang dibungkus pemeriksaan login
 function daftarkanDenganGerbang(daftarkanSemua) {

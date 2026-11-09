@@ -1,6 +1,7 @@
 const { ipcMain } = require('electron');
 const auth = require('../auth/auth');
 const session = require('../auth/session');
+const dongleMonitor = require('../security/dongleMonitor');
 
 async function jalankan(aksi) {
   try {
@@ -22,10 +23,11 @@ function status() {
 function daftarkan() {
   ipcMain.handle('auth:status', () => jalankan(async () => status()));
 
-  ipcMain.handle('auth:daftar', (event, username, password) =>
+    ipcMain.handle('auth:daftar', (event, username, password) =>
     jalankan(async () => {
       await auth.daftar(username, password);
       await auth.masuk(username, password);
+      dongleMonitor.mulai(event.sender);
       return status();
     })
   );
@@ -33,12 +35,14 @@ function daftarkan() {
   ipcMain.handle('auth:masuk', (event, username, password) =>
     jalankan(async () => {
       await auth.masuk(username, password);
+      dongleMonitor.mulai(event.sender);
       return status();
     })
   );
 
   ipcMain.handle('auth:keluar', () =>
     jalankan(async () => {
+      dongleMonitor.berhenti();
       auth.keluar();
       return status();
     })

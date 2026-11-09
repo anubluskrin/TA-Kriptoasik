@@ -369,3 +369,43 @@ async function periksaStatusLogin() {
 
 periksaStatusLogin();
 }
+
+// Dongle
+const elLoginDongle = document.getElementById('login-dongle');
+
+async function perbaruiDongle() {
+  if (document.body.classList.contains('terkunci')) {
+    const r = await window.api.dongleStatus();
+    if (r.ok && r.terpasang) {
+      elLoginDongle.textContent = `Dongle terdeteksi (${r.drive}, ${r.model})`;
+      elLoginDongle.className = 'status sukses';
+    } else {
+      elLoginDongle.textContent = r.ok ? 'Pasang flashdisk dongle' : 'Gagal membaca flashdisk: ' + r.galat;
+      elLoginDongle.className = 'status galat';
+    }
+  }
+  setTimeout(perbaruiDongle, 2000);
+}
+
+perbaruiDongle();
+
+// Flashdisk dicabut saat sesi berjalan: kembali ke layar login
+window.api.onDongleDicabut(() => {
+  try {
+    sessionStorage.setItem('pesanKunci', 'Flashdisk dongle dicabut. Aplikasi dikunci.');
+  } catch {
+    // penyimpanan tidak tersedia, pesan dilewati
+  }
+  location.reload();
+});
+
+try {
+  const pesanKunci = sessionStorage.getItem('pesanKunci');
+  if (pesanKunci) {
+    elLoginStatus.textContent = pesanKunci;
+    elLoginStatus.className = 'status galat';
+    sessionStorage.removeItem('pesanKunci');
+  }
+} catch {
+  // penyimpanan tidak tersedia, pesan dilewati
+}
