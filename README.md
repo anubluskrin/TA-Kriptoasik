@@ -6,12 +6,53 @@ Aplikasi desktop kriptografi untuk Tugas Akhir Kriptografi. Satu aplikasi yang m
 
 **Keputusan yang sudah disepakati tim:**
 - Bahasa/platform: JavaScript dengan Electron.
-- Super enkripsi teks: Vigenère + S-DES.
+- Super enkripsi teks: Vigenère (**mod 26**, keputusan 9 November 2026) lalu S-DES mode CBC.
 - Kesepakatan kunci antar laptop: **passphrase bersama** (kedua pengguna menyepakati passphrase di luar aplikasi), karena tidak ada algoritma klasik yang asimetris.
 
 > **Penting:** ini harus **aplikasi desktop (Electron)**, bukan web biasa di browser. Browser tidak bisa membaca serial number flashdisk dan tidak bisa mendeteksi pencabutannya, sehingga syarat dongle tidak terpenuhi.
 
 > **Catatan versi:** README ini sudah memuat lapisan komunikasi dan skema database terbaru. `README_PYTHON.md` dan `README_JAVA.md` belum diperbarui, jadi skema DB-nya berbeda (tabel `messages` dan tabel kontak/percakapan).
+
+---
+
+## Status Pengerjaan
+
+_Diperbarui: 9 November 2026, setelah Step 1.6 (super enkripsi teks)._
+
+Ringkasnya: fondasi kriptografi teks sudah jadi dan teruji (Vigenère, S-DES, super cipher), kerangka Electron sudah berjalan, dan halaman **Pesan Teks** sudah bisa dipakai. Login 3 faktor, database, file, steganografi, dan blockchain belum dikerjakan.
+
+| Fase | Step | Status | Catatan |
+|---|---|---|---|
+| 0 | 0.1-0.3 Node, Git, proyek, jendela Electron | Selesai | |
+| 0 | 0.4-0.6 Uji webcam, serial flashdisk, WebSocket | Skrip selesai | `src/renderer/webcam-test.js`, `tools/usb-serial-test.js`, `tools/ws-*.js`. Hasil uji di laptop demo belum dicatat di dokumen ini. |
+| 1 | 1.1 `vitest` | Selesai | `npm test` |
+| 1 | 1.2 `vigenere.js` | Selesai | **mod 26** (lihat 8.1) |
+| 1 | 1.3-1.5 `sdes.js` | Selesai | Subkunci, enkripsi/dekripsi satu blok (lulus vektor uji), mode CBC |
+| 1 | 1.6 `superCipher.js` | Selesai | Vigenère lalu S-DES CBC lalu Base64, IV acak 1 byte |
+| 1 | 1.7-1.13 `keys`, `password`, `dbCipher`, `fileCipher`, `envelope`, `stego`, `block`/`chain` | Belum | Berikutnya: **1.7 `keys.js`** |
+| 2 | 2.1-2.2 Kerangka aman, preload, IPC | Selesai | `contextIsolation`, `sandbox`, CSP, preload `contextBridge`, kanal `app:ping` |
+| 2 | 2.3-2.5 SQLite, repositories, mode `--setup` | Belum | |
+| 3 | 3.1-3.9 Login 3 faktor | Belum | |
+| 4 | 4.1 Kerangka dashboard | Sebagian | Sidebar dan 3 halaman (Beranda, Pesan Teks, Uji Webcam) |
+| 4 | 4.3 Pesan teks | Sebagian | Enkripsi/dekripsi dengan **kunci manual**. Belum: kunci percakapan, amplop ber-MAC, penyimpanan ke DB, tanda "penting" |
+| 4 | 4.2, 4.4-4.8 | Belum | |
+| 5, 6 | Relay, integrasi, uji, laporan | Belum | |
+
+**Pemetaan ke kriteria dosen:**
+
+| # | Kriteria | Status |
+|---|---|---|
+| 1 | Login biometrik + hanya hidup dengan dongle | Belum (baru skrip uji webcam dan serial) |
+| 2 | Login memakai algoritma kriptografi | Belum |
+| 3 | Pesan teks: super enkripsi | **Algoritma dan UI selesai**; belum terhubung ke kontak, kunci percakapan, dan DB |
+| 4 | Pesan file: kriptografi berbeda dari teks | Belum |
+| 5 | Pesan penting terenkripsi di basis data | Belum |
+| 6 | Pesan gambar: steganografi | Belum |
+| 7 | Aset penting: blockchain sederhana | Belum |
+
+**Pengujian saat ini:** `npm test` menjalankan 48 tes (8 Vigenère, 25 S-DES, 15 super cipher), semuanya lulus.
+
+**Catatan penomoran:** commit `step 1.3 dan 1.4: kerangka aplikasi dan pesan teks tahap 1` sebenarnya setara Step 2.1-2.2 dan sebagian 4.3 di `ALUR_PENGERJAAN.md`. Perbaikan susulan (ganti nama `superCipher.js`, pasang preload, rapikan `index.html`, tes Vigenère) disebut Step A1-A4. Mulai dari S-DES, penomoran kembali mengikuti `ALUR_PENGERJAAN.md`.
 
 ---
 
@@ -44,7 +85,7 @@ Aplikasi desktop kriptografi untuk Tugas Akhir Kriptografi. Satu aplikasi yang m
 |---|---|---|---|
 | 1 | Login biometrik + hanya hidup dengan dongle | Dongle flashdisk (serial + file kunci) dan verifikasi wajah via webcam (laptop tanpa fingerprint) | HMAC-SHA256, face embedding |
 | 2 | Login memakai algoritma kriptografi | Password di-hash dengan salt | PBKDF2-HMAC-SHA256 (opsional scrypt) |
-| 3 | Pesan teks: super enkripsi | Klasik + modern berurutan | Vigenère (mod 95) lalu S-DES mode CBC |
+| 3 | Pesan teks: super enkripsi | Klasik + modern berurutan | Vigenère (mod 26) lalu S-DES mode CBC |
 | 4 | Pesan file: kriptografi beda dari teks | Enkripsi file per-chunk dengan autentikasi | AES-256-GCM |
 | 5 | Pesan penting terenkripsi di basis data | Kolom ciphertext di SQLite | ChaCha20-Poly1305 |
 | 6 | Pesan gambar: steganografi | Penyisipan pesan terenkripsi ke piksel PNG | LSB dengan urutan piksel acak (seed dari kunci) |
@@ -192,6 +233,8 @@ Tiap kanal divalidasi di main (tipe data, panjang, sesi aktif).
 | `event:msg-received` | M→R | Ada pesan baru dari kontak |
 | `event:net-status` | M→R | Status koneksi relay berubah |
 
+**Kanal yang sudah ada saat ini (sementara):** `app:ping`, `pesan:enkripsi`, dan `pesan:dekripsi`. Dua kanal terakhir menerima teks, kunci Vigenère (huruf A-Z), dan kunci S-DES (10 karakter `0`/`1`) yang diketik manual, lalu mengembalikan `{ ok, hasil, rincian }`. Keduanya akan digantikan `msg:send` dan `msg:open` setelah kunci percakapan tersedia (Step 4.2-4.3).
+
 ---
 
 ## 4. Struktur Folder
@@ -201,6 +244,12 @@ securevault-js/
 ├─ package.json
 ├─ electron-builder.yml
 ├─ README.md
+├─ ALUR_PENGERJAAN.md             # peta jalan step demi step
+├─ vitest.config.mjs
+├─ tools/                         # skrip uji risiko Fase 0
+│  ├─ usb-serial-test.js          # baca serial flashdisk (PowerShell)
+│  ├─ ws-server.js                # server WebSocket percobaan (port 8765)
+│  └─ ws-client.js
 ├─ server/
 │  └─ relay.js                    # server relay kecil (opsional, Tahap 2 komunikasi)
 ├─ src/
@@ -339,7 +388,7 @@ conv_master = PBKDF2-HMAC-SHA256(utf8(passphrase), conv_salt, 200_000, 32)
 
 csub(label) = HMAC-SHA256(conv_master, label)
 
-k_vig    = csub("conv-vigenere")  → 16 karakter ASCII printable (tiap byte b → 32 + (b mod 95))
+k_vig    = csub("conv-vigenere")  → 16 huruf A-Z (tiap byte b → "A" + (b mod 26))
 k_sdes   = 10 bit pertama dari csub("conv-sdes")
 k_xfile  = csub("conv-file")      → AES-256-GCM untuk file yang dikirim ke kontak
 k_xstego = csub("conv-stego")     → seed LSB untuk gambar yang dikirim ke kontak
@@ -487,16 +536,20 @@ Menyimpan user aktif, kunci turunan (lokal dan percakapan yang sudah dibuka), wa
 
 ### 8.1 Vigenère (`crypto/vigenere.js`)
 
-Vigenère standar hanya A-Z. Agar angka dan simbol ikut terenkripsi, bekerja di **ASCII printable 32-126 (mod 95)**.
+**Keputusan tim (9 November 2026): Vigenère klasik, mod 26.** Hanya huruf yang digeser. Huruf besar dan kecil dipertahankan. Angka, spasi, simbol, baris baru, dan emoji **tidak diubah** dan tidak menggeser posisi kunci (kunci hanya maju ketika menemui huruf).
 
 ```
-enc(c, k) = ((c - 32) + (k - 32)) mod 95 + 32
-dec(c, k) = ((c - 32) - (k - 32)) mod 95 + 32
+enc(c, k) = (c + k) mod 26      c dan k bernilai 0..25 (A=0, B=1, ..., Z=25)
+dec(c, k) = (c - k) mod 26
 ```
 
-Perhatian di JavaScript: operator `%` bisa menghasilkan nilai negatif. Gunakan `((a % 95) + 95) % 95`.
+Kunci hanya boleh berisi huruf A-Z (tidak membedakan huruf besar-kecil), tidak boleh kosong, spasi, atau angka. Perhatian di JavaScript: operator `%` bisa menghasilkan nilai negatif, jadi dipakai `((a % n) + n) % n`.
 
-Kunci diulang sepanjang plaintext. Rekomendasi: encode plaintext ke UTF-8 lalu ke Base64 sebelum Vigenère, sehingga semua karakter (baris baru, emoji) aman berada di rentang 32-126.
+Contoh uji klasik: `ATTACKATDAWN` dengan kunci `LEMON` menghasilkan `LXFOPVEFRNHR`.
+
+**Konsekuensi yang perlu ditulis di laporan:** tahap Vigenère tidak melindungi angka dan simbol. Karena itu plaintext **tidak** di-Base64 sebelum Vigenère (Base64 akan membuat banyak karakter, yaitu angka, `+`, `/`, dan `=`, lolos tanpa terenkripsi). Perlindungan untuk semua karakter (termasuk emoji dan baris baru) datang dari tahap S-DES yang bekerja pada seluruh byte UTF-8 (lihat 8.3).
+
+_Alternatif yang dipertimbangkan: mod 95 (ASCII 32-126) dengan Base64 di awal. Tim memilih mod 26 karena lebih mudah dijelaskan sebagai Vigenère klasik._
 
 ### 8.2 S-DES (`crypto/sdes.js`)
 
@@ -546,29 +599,31 @@ Jadikan ini tes pertama di `tests/sdes.test.js`. Jika tidak cocok, ada yang sala
 
 **Mode CBC:** `C[i] = E(P[i] XOR C[i-1])`, `C[0]` memakai IV 8-bit acak yang disimpan di depan ciphertext. Karena blok S-DES hanya 1 byte, **padding tidak diperlukan** dan CBC bekerja per byte. Tulis di laporan bahwa ruang kunci hanya 2^10 = 1024 sehingga mudah di-brute-force (S-DES edukasi, bukan untuk produksi).
 
+**Status implementasi (Step 1.3-1.5, selesai):** `crypto/sdes.js` memakai representasi bit berupa array angka. Fungsi yang diekspor: `buatSubkunci(kunci)` (untuk `1010000010` menghasilkan K1 = `10100100` dan K2 = `01000011`), `enkripsiBlok(blok, kunci)` dan `dekripsiBlok(blok, kunci)` untuk satu blok 8 bit, serta `cbcEncrypt(data, kunci, iv)` dan `cbcDecrypt(data, kunci, iv)` untuk `Buffer`. Kunci berupa string 10 karakter `0`/`1` (atau array bit), IV berupa `Buffer` sepanjang 1 byte. Subkunci dihitung sekali per panggilan CBC. Tes `tests/sdes.test.js` mencakup vektor uji README, round-trip seluruh 256 blok (membuktikan enkripsi adalah permutasi), dan sifat CBC (IV salah hanya merusak byte pertama).
+
 ### 8.3 Super Enkripsi (`crypto/superCipher.js`)
 
-Kunci yang dipakai adalah **kunci percakapan** (`k_vig`, `k_sdes`) bila pesan dikirim ke kontak.
+Kunci yang dipakai adalah **kunci percakapan** (`k_vig`, `k_sdes`) bila pesan dikirim ke kontak. Pada tahap pengembangan saat ini kunci diketik manual di halaman Pesan Teks.
 
 ```
 encrypt(text, kVig, kSdes):
-    p  = base64(utf8(text))                      // string ASCII
-    v  = vigenere.encrypt(p, kVig)               // klasik
+    v  = vigenere.encrypt(text, kVig)                          // klasik, mod 26 (hanya huruf)
     iv = randomBytes(1)
-    c  = sdes.cbcEncrypt(Buffer.from(v, 'ascii'), kSdes, iv)   // modern
+    c  = sdes.cbcEncrypt(Buffer.from(v, 'utf8'), kSdes, iv)    // modern, seluruh byte
     return base64(Buffer.concat([iv, c]))
 
 decrypt(token, kVig, kSdes):
     raw = Buffer.from(token, 'base64')
     iv = raw.subarray(0, 1); c = raw.subarray(1)
-    v  = sdes.cbcDecrypt(c, kSdes, iv).toString('ascii')
-    p  = vigenere.decrypt(v, kVig)
-    return Buffer.from(p, 'base64').toString('utf8')
+    v  = sdes.cbcDecrypt(c, kSdes, iv).toString('utf8')
+    return vigenere.decrypt(v, kVig)
 ```
+
+**Antarmuka (sudah diimplementasikan):** `encrypt(teks, { kunciVigenere, kunciSdes })` dan `decrypt(token, { kunciVigenere, kunciSdes })`, keduanya mengembalikan `{ hasil, rincian }`. `rincian` berisi hasil tiap tahap (teks, hasil Vigenère, IV, ciphertext hex, Base64) untuk ditampilkan di UI dan dijelaskan saat demo. Parameter opsional `iv` hanya dipakai pada pengujian. Kunci S-DES harus 10 karakter `0`/`1`; token yang bukan Base64 valid atau kosong ditolak; spasi dan baris baru saat menempel token diabaikan.
 
 Kunci Vigenère dan S-DES **berbeda**. Sebagai nilai laporan: bahas bagaimana dua lapis menambah *confusion* dan *diffusion* meski S-DES lemah.
 
-**Catatan penting:** super enkripsi ini **tidak punya autentikasi**. Dengan kunci yang salah atau pesan yang dimodifikasi, dekripsi tetap "berhasil" tetapi hasilnya sampah, dan tidak ada tanda bahwa ada yang salah. Itu sebabnya setiap pesan dibungkus amplop ber-MAC (8.6).
+**Catatan penting:** super enkripsi ini **tidak punya autentikasi**. Dengan kunci yang salah atau pesan yang dimodifikasi, dekripsi tetap "berhasil" tetapi hasilnya sampah, dan tidak ada tanda bahwa ada yang salah. Perilaku ini sengaja diuji di `tests/superCipher.test.js`. Itu sebabnya setiap pesan dibungkus amplop ber-MAC (8.6).
 
 ### 8.4 Enkripsi File (`crypto/fileCipher.js`)
 
@@ -1006,7 +1061,9 @@ Model Human sebaiknya disalin ke folder aplikasi (offline) dan dimuat dari path 
 | Area | Uji | Hasil yang diharapkan |
 |---|---|---|
 | S-DES | Vektor uji K=1010000010, P=01110010 | C = 01110111 |
-| Vigenère | Enkripsi lalu dekripsi teks dengan simbol dan angka | Teks kembali identik |
+| S-DES | Round-trip seluruh 256 blok; 256 blok menghasilkan 256 ciphertext berbeda | Identik; enkripsi berupa permutasi |
+| S-DES CBC | Round-trip byte 0-255; IV berbeda; kunci salah; IV salah | Identik; ciphertext berbeda; bukan plaintext; hanya byte pertama rusak |
+| Vigenère | Contoh klasik `ATTACKATDAWN` + `LEMON`; round-trip dengan huruf besar-kecil, angka, simbol | `LXFOPVEFRNHR`; teks kembali identik, angka dan simbol tidak berubah |
 | Super cipher | Round-trip, termasuk emoji dan baris baru | Identik |
 | File | Round-trip file 0 byte, 1 byte, 1 MiB, 50 MiB | Identik, memori stabil |
 | File | Ubah 1 byte di ciphertext | Dekripsi ditolak (autentikasi gagal) |
@@ -1044,7 +1101,7 @@ Model Human sebaiknya disalin ke folder aplikasi (offline) dan dimuat dari path 
 
 Tulis jujur di laporan, ini justru nilai plus:
 
-- **S-DES lemah:** ruang kunci 1024, brute force instan. Dipakai karena syarat tugas/edukasi. Vigenère juga lemah terhadap analisis frekuensi, tetapi plaintext sudah di-Base64 dan dilapisi S-DES.
+- **S-DES lemah:** ruang kunci 1024, brute force instan. Dipakai karena syarat tugas/edukasi. Vigenère mod 26 juga lemah terhadap analisis frekuensi dan tidak mengubah angka maupun simbol, tetapi hasilnya (seluruh byte) dilapisi S-DES CBC dengan IV acak, sehingga pola teks tidak langsung terlihat.
 - **Keamanan percakapan bertumpu pada passphrase.** Jika passphrase bocor atau lemah, semua pesan di epoch itu bisa dibuka. Passphrase harus dibagikan lewat jalur aman di luar aplikasi.
 - **Tidak ada forward secrecy.** Kunci percakapan tetap sama selama satu epoch. Kebocoran di kemudian hari membuka pesan lama yang sudah tersadap. Mitigasi: ganti passphrase berkala (naikkan epoch).
 - **Tidak ada pertukaran kunci asimetris** (tidak ada algoritma klasik yang asimetris). Ini keputusan sadar tim: kesepakatan kunci dilakukan secara manual di luar aplikasi.
