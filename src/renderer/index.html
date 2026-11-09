@@ -12,6 +12,7 @@
     <nav>
       <button class="menu-item active" data-page="beranda">Beranda</button>
       <button class="menu-item" data-page="pesan">Pesan Teks</button>
+      <button class="menu-item" data-page="file">File</button>
       <button class="menu-item" data-page="webcam">Uji Webcam</button>
     </nav>
   </aside>
@@ -54,6 +55,27 @@
       <details class="rincian">
         <summary>Rincian proses</summary>
         <pre id="pesan-rincian" class="keluaran"></pre>
+      </details>
+    </section>
+
+        <!-- File -->
+    <section id="page-file" class="page">
+      <h1>File</h1>
+      <p>Enkripsi berkas apa saja dengan AES-256-GCM. Hasilnya berkas berekstensi .svlt. Berkas yang diubah atau passphrase yang salah akan ditolak.</p>
+
+      <label for="file-passphrase">Passphrase (minimal 8 karakter)</label>
+      <input id="file-passphrase" type="password" autocomplete="off" />
+
+      <div class="baris-tombol">
+        <button id="file-enkripsi" class="aksi">Pilih berkas lalu enkripsi</button>
+        <button id="file-dekripsi" class="aksi sekunder">Pilih berkas .svlt lalu dekripsi</button>
+      </div>
+
+      <p id="file-status" class="status"></p>
+
+      <details class="rincian" open>
+        <summary>Rincian proses</summary>
+        <pre id="file-rincian" class="keluaran"></pre>
       </details>
     </section>
 

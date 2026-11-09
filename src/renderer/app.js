@@ -66,3 +66,45 @@ document.getElementById('pesan-pindah').addEventListener('click', () => {
   elTeks.value = elHasil.value;
   elHasil.value = '';
 });
+
+// Halaman File
+const elFilePass = document.getElementById('file-passphrase');
+const elFileStatus = document.getElementById('file-status');
+const elFileRincian = document.getElementById('file-rincian');
+
+function tampilkanHasilFile(respons) {
+  elFileRincian.textContent = '';
+  if (!respons.ok) {
+    elFileStatus.textContent = 'Gagal: ' + respons.galat;
+    elFileStatus.className = 'status galat';
+    return;
+  }
+  if (respons.dibatalkan) {
+    elFileStatus.textContent = 'Dibatalkan';
+    elFileStatus.className = 'status';
+    return;
+  }
+  elFileRincian.textContent = respons.rincian
+    .map(([label, nilai]) => label.padEnd(22) + ': ' + nilai)
+    .join('\n');
+  elFileStatus.textContent = 'Berhasil';
+  elFileStatus.className = 'status sukses';
+}
+
+async function jalankanFile(aksi) {
+  elFileStatus.textContent = 'Memproses...';
+  elFileStatus.className = 'status';
+  try {
+    tampilkanHasilFile(await aksi());
+  } catch (err) {
+    tampilkanHasilFile({ ok: false, galat: err.message });
+  }
+}
+
+document.getElementById('file-enkripsi').addEventListener('click', () => {
+  jalankanFile(() => window.api.fileEnkripsi(elFilePass.value));
+});
+
+document.getElementById('file-dekripsi').addEventListener('click', () => {
+  jalankanFile(() => window.api.fileDekripsi(elFilePass.value));
+});

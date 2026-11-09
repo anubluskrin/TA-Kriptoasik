@@ -58,7 +58,15 @@ function decrypt(token, { kunciVigenere, kunciSdes } = {}) {
   periksaKunciSdes(kunciSdes);
 
   const { iv, isi } = bacaToken(token);
-  const hasilSdes = sdes.cbcDecrypt(isi, kunciSdes, iv).toString('utf8');
+  
+  let hasilSdes;
+  try {
+    hasilSdes = new TextDecoder('utf-8', { fatal: true })
+      .decode(sdes.cbcDecrypt(isi, kunciSdes, iv));
+  } catch {
+    throw new Error('Dekripsi gagal: kunci S-DES salah atau ciphertext rusak');
+  }
+
   const teks = vigenere.decrypt(hasilSdes, kunciVigenere);
 
   return {
