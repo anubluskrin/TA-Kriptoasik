@@ -4,40 +4,68 @@
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'" />
   <title>SecureVault</title>
+  <link rel="stylesheet" href="styles/app.css" />
 </head>
 <body>
-  <h1>SecureVault</h1>
-  <p>Uji webcam (sementara)</p>
-  <button id="btn">Nyalakan webcam</button>
-  <p id="status"></p>
-  <video id="video" width="640" height="480" autoplay muted playsinline></video>
+  <aside class="sidebar">
+    <div class="brand">SecureVault</div>
+    <nav>
+      <button class="menu-item active" data-page="beranda">Beranda</button>
+      <button class="menu-item" data-page="pesan">Pesan Teks</button>
+      <button class="menu-item" data-page="webcam">Uji Webcam</button>
+    </nav>
+  </aside>
+
+  <main class="konten">
+    <!-- Beranda -->
+    <section id="page-beranda" class="page active">
+      <h1>Beranda</h1>
+      <p>Uji komunikasi antara tampilan dan proses utama.</p>
+      <div class="baris-tombol">
+        <button id="btn-ping" class="aksi">Ping proses utama</button>
+      </div>
+      <pre id="ping-output" class="keluaran"></pre>
+    </section>
+
+    <!-- Pesan Teks -->
+    <section id="page-pesan" class="page">
+      <h1>Pesan Teks</h1>
+      <p>Super enkripsi: Vigenère (klasik) lalu S-DES (modern). Saat ini baru tahap 1, yaitu Vigenère.</p>
+
+      <label for="pesan-kunci-vig">Kunci Vigenère (huruf saja)</label>
+      <input id="pesan-kunci-vig" type="text" value="LEMON" autocomplete="off" />
+
+      <label for="pesan-teks">Teks</label>
+      <textarea id="pesan-teks" rows="5">ATTACKATDAWN</textarea>
+
+      <div class="baris-tombol">
+        <button id="pesan-enkripsi" class="aksi">Enkripsi</button>
+        <button id="pesan-dekripsi" class="aksi sekunder">Dekripsi</button>
+        <button id="pesan-pindah" class="aksi sekunder">Pindahkan hasil ke kolom Teks</button>
+      </div>
+
+      <label for="pesan-hasil">Hasil</label>
+      <textarea id="pesan-hasil" rows="5" readonly></textarea>
+      <p id="pesan-status" class="status"></p>
+
+      <details class="rincian">
+        <summary>Rincian proses</summary>
+        <pre id="pesan-rincian" class="keluaran"></pre>
+      </details>
+    </section>
+
+    <!-- Uji Webcam (sementara, dipindah dari halaman awal) -->
+    <section id="page-webcam" class="page">
+      <h1>Uji Webcam</h1>
+      <div class="baris-tombol">
+        <button id="btn" class="aksi">Nyalakan webcam</button>
+      </div>
+      <p id="status" class="status"></p>
+      <video id="video" width="640" height="480" autoplay muted playsinline></video>
+    </section>
+  </main>
+
   <script src="webcam-test.js"></script>
-
-        <section id="page-pesan" class="page">
-        <h1>Pesan Teks</h1>
-        <p>Super enkripsi: Vigenère (klasik) lalu S-DES (modern). Saat ini baru tahap 1, yaitu Vigenère.</p>
-
-        <label for="pesan-kunci-vig">Kunci Vigenère (huruf saja)</label>
-        <input id="pesan-kunci-vig" type="text" value="LEMON" autocomplete="off" />
-
-        <label for="pesan-teks">Teks</label>
-        <textarea id="pesan-teks" rows="5">ATTACKATDAWN</textarea>
-
-        <div class="baris-tombol">
-          <button id="pesan-enkripsi" class="aksi">Enkripsi</button>
-          <button id="pesan-dekripsi" class="aksi sekunder">Dekripsi</button>
-          <button id="pesan-pindah" class="aksi sekunder">Pindahkan hasil ke kolom Teks</button>
-        </div>
-
-        <label for="pesan-hasil">Hasil</label>
-        <textarea id="pesan-hasil" rows="5" readonly></textarea>
-        <p id="pesan-status" class="status"></p>
-
-        <details class="rincian">
-          <summary>Rincian proses</summary>
-          <pre id="pesan-rincian" class="keluaran"></pre>
-        </details>
-      </section>
-      
+  <script src="app.js"></script>
 </body>
 </html>
