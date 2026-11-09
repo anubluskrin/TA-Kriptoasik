@@ -24,6 +24,7 @@ document.getElementById('btn-ping').addEventListener('click', async () => {
 
 // Halaman Pesan Teks
 const elKunciVig = document.getElementById('pesan-kunci-vig');
+const elKunciSdes = document.getElementById('pesan-kunci-sdes');
 const elTeks = document.getElementById('pesan-teks');
 const elHasil = document.getElementById('pesan-hasil');
 const elStatus = document.getElementById('pesan-status');
@@ -54,11 +55,11 @@ async function jalankan(aksi) {
 }
 
 document.getElementById('pesan-enkripsi').addEventListener('click', () => {
-  jalankan(() => window.api.pesanEnkripsi(elTeks.value, elKunciVig.value));
+  jalankan(() => window.api.pesanEnkripsi(elTeks.value, elKunciVig.value, elKunciSdes.value));
 });
 
 document.getElementById('pesan-dekripsi').addEventListener('click', () => {
-  jalankan(() => window.api.pesanDekripsi(elTeks.value, elKunciVig.value));
+  jalankan(() => window.api.pesanDekripsi(elTeks.value, elKunciVig.value, elKunciSdes.value));
 });
 
 document.getElementById('pesan-pindah').addEventListener('click', () => {

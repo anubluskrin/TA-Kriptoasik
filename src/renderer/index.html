@@ -30,10 +30,13 @@
     <!-- Pesan Teks -->
     <section id="page-pesan" class="page">
       <h1>Pesan Teks</h1>
-      <p>Super enkripsi: Vigenère (klasik) lalu S-DES (modern). Saat ini baru tahap 1, yaitu Vigenère.</p>
+      <p>Super enkripsi: Vigenère (klasik) lalu S-DES mode CBC (modern). Hasil enkripsi berupa teks Base64; tempel teks Base64 itu ke kolom Teks untuk mendekripsi.</p>
 
       <label for="pesan-kunci-vig">Kunci Vigenère (huruf saja)</label>
       <input id="pesan-kunci-vig" type="text" value="LEMON" autocomplete="off" />
+
+      <label for="pesan-kunci-sdes">Kunci S-DES (10 karakter 0 atau 1)</label>
+      <input id="pesan-kunci-sdes" type="text" value="1010000010" maxlength="10" autocomplete="off" />
 
       <label for="pesan-teks">Teks</label>
       <textarea id="pesan-teks" rows="5">ATTACKATDAWN</textarea>
