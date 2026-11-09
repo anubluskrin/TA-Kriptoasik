@@ -2,7 +2,7 @@ const { app, BrowserWindow, session } = require('electron');
 const path = require('node:path');
 const { daftarkanSemuaIpc } = require('./ipc');
 const db = require('./db/db');
-const session = require('./auth/session');
+const sesiLogin = require('./auth/session');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -44,6 +44,6 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', () => {
-  session.akhiri();
+  sesiLogin.akhiri();
   db.tutup();
 });

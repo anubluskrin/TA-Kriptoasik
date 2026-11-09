@@ -1,7 +1,7 @@
 const { ipcMain, dialog, BrowserWindow } = require('electron');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const stego = require('../crypto/stegano');
+const stegano = require('../crypto/stegano');
 
 const MAKS_BERKAS = 50 * 1024 * 1024;
 const MAKS_PESAN = 100000;
@@ -45,12 +45,12 @@ async function sisipkanDariDialog(event, pesan, passphrase) {
   const gambar = await bacaGambarDariDialog(win, 'Pilih gambar PNG pembawa pesan');
   if (!gambar) return { dibatalkan: true };
 
-  const hasil = await stego.sisipkan(gambar.isi, pesan, passphrase);
+  const hasil = await stegano.sisipkan(gambar.isi, pesan, passphrase);
 
   const nama = path.basename(gambar.asal, path.extname(gambar.asal));
   const simpan = await dialog.showSaveDialog(win, {
     title: 'Simpan gambar hasil sisipan',
-    defaultPath: nama + '-stego.png',
+    defaultPath: nama + '-stegano.png',
     filters: [{ name: 'Gambar PNG', extensions: ['png'] }],
   });
   if (simpan.canceled) return { dibatalkan: true };
@@ -79,7 +79,7 @@ async function ekstrakDariDialog(event, passphrase) {
   const gambar = await bacaGambarDariDialog(win, 'Pilih gambar PNG yang berisi pesan');
   if (!gambar) return { dibatalkan: true };
 
-  const { pesan, ukuranPesan } = await stego.ekstrak(gambar.isi, passphrase);
+  const { pesan, ukuranPesan } = await stegano.ekstrak(gambar.isi, passphrase);
   return {
     hasil: pesan,
     rincian: [
