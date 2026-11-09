@@ -49,3 +49,58 @@ describe('sdes - bagian 1: permutasi dan subkunci', () => {
     expect(k2).toHaveLength(8);
   });
 });
+
+describe('sdes - bagian 2: enkripsi dan dekripsi satu blok', () => {
+  const KUNCI = '1010000010';
+
+  it('vektor uji: K=1010000010, P=01110010 -> C=01110111', () => {
+    const c = sdes.enkripsiBlok('01110010', KUNCI);
+    expect(sdes.bitKeString(c)).toBe('01110111');
+  });
+
+  it('dekripsi mengembalikan blok asal pada vektor uji', () => {
+    const p = sdes.dekripsiBlok('01110111', KUNCI);
+    expect(sdes.bitKeString(p)).toBe('01110010');
+  });
+
+  it('round-trip untuk seluruh 256 kemungkinan blok', () => {
+    for (let n = 0; n < 256; n++) {
+      const blok = n.toString(2).padStart(8, '0');
+      const c = sdes.enkripsiBlok(blok, KUNCI);
+      expect(sdes.bitKeString(sdes.dekripsiBlok(c, KUNCI))).toBe(blok);
+    }
+  });
+
+  it('enkripsi adalah permutasi: 256 blok menghasilkan 256 ciphertext berbeda', () => {
+    const hasil = new Set();
+    for (let n = 0; n < 256; n++) {
+      const blok = n.toString(2).padStart(8, '0');
+      hasil.add(sdes.bitKeString(sdes.enkripsiBlok(blok, KUNCI)));
+    }
+    expect(hasil.size).toBe(256);
+  });
+
+  it('kunci berbeda menghasilkan ciphertext berbeda', () => {
+    const a = sdes.bitKeString(sdes.enkripsiBlok('01110010', '1010000010'));
+    const b = sdes.bitKeString(sdes.enkripsiBlok('01110010', '1010000011'));
+    expect(a).not.toBe(b);
+  });
+
+  it('menerima masukan berupa array bit maupun string', () => {
+    const dariString = sdes.enkripsiBlok('01110010', KUNCI);
+    const dariArray = sdes.enkripsiBlok([0, 1, 1, 1, 0, 0, 1, 0], [1, 0, 1, 0, 0, 0, 0, 0, 1, 0]);
+    expect(dariArray).toEqual(dariString);
+  });
+
+  it('menolak blok atau kunci dengan panjang salah', () => {
+    expect(() => sdes.enkripsiBlok('0111', KUNCI)).toThrow();
+    expect(() => sdes.enkripsiBlok('01110010', '101')).toThrow();
+  });
+
+  it('cariSbox: baris dari bit 1 dan 4, kolom dari bit 2 dan 3', () => {
+    // 0000 -> baris 0, kolom 0 -> S0[0][0] = 1 -> [0,1]
+    expect(sdes.cariSbox(sdes.S0, [0, 0, 0, 0])).toEqual([0, 1]);
+    // 1111 -> baris 3, kolom 3 -> S0[3][3] = 2 -> [1,0]
+    expect(sdes.cariSbox(sdes.S0, [1, 1, 1, 1])).toEqual([1, 0]);
+  });
+});

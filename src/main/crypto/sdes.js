@@ -1,5 +1,6 @@
 // S-DES (Simplified DES): blok 8-bit, kunci 10-bit, 2 putaran Feistel.
 // Bagian 1: tabel permutasi dan pembangkit subkunci K1 dan K2.
+// Bagian 2: enkripsi dan dekripsi satu blok 8 bit.
 // Bit direpresentasikan sebagai array angka, mis. [1, 0, 1, 0, ...]
 
 // Semua tabel memakai indeks mulai dari 1
@@ -70,6 +71,63 @@ function buatSubkunci(kunci) {
   return { k1, k2 };
 }
 
+// XOR dua array bit yang panjangnya sama
+function xor(a, b) {
+  return a.map((nilai, i) => nilai ^ b[i]);
+}
+
+// Mencari nilai S-box: baris dari bit 1 dan 4, kolom dari bit 2 dan 3.
+// Hasilnya 2 bit, mis. 3 -> [1, 1]
+function cariSbox(sbox, empatBit) {
+  const baris = empatBit[0] * 2 + empatBit[3];
+  const kolom = empatBit[1] * 2 + empatBit[2];
+  const nilai = sbox[baris][kolom];
+  return [nilai >> 1, nilai & 1];
+}
+
+// Fungsi F: EP(kanan) XOR subkunci -> S0 dan S1 -> P4
+function fungsiF(kanan, subkunci) {
+  const diperluas = xor(permutasi(kanan, EP), subkunci);
+  const hasilS0 = cariSbox(S0, diperluas.slice(0, 4));
+  const hasilS1 = cariSbox(S1, diperluas.slice(4));
+  return permutasi(hasilS0.concat(hasilS1), P4);
+}
+
+// Satu putaran Feistel: f_K(L, R) = (L XOR F(R, K), R)
+function putaran(kiri, kanan, subkunci) {
+  return { kiri: xor(kiri, fungsiF(kanan, subkunci)), kanan };
+}
+
+// Proses satu blok 8 bit dengan urutan subkunci tertentu (dipakai enkripsi dan dekripsi)
+function prosesBlok(blok, kunciPertama, kunciKedua) {
+  const bit = permutasi(blok, IP);
+  let kiri = bit.slice(0, 4);
+  let kanan = bit.slice(4);
+
+  ({ kiri, kanan } = putaran(kiri, kanan, kunciPertama));
+  [kiri, kanan] = [kanan, kiri]; // swap
+  ({ kiri, kanan } = putaran(kiri, kanan, kunciKedua));
+
+  return permutasi(kiri.concat(kanan), IP_INV);
+}
+
+// Menerima kunci/blok berupa string "0101..." atau array bit; mengembalikan array bit
+function terimaBit(nilai, panjang) {
+  return Array.isArray(nilai) ? nilai : bitDariString(nilai, panjang);
+}
+
+// Enkripsi satu blok 8 bit: IP -> f_K1 -> swap -> f_K2 -> IP^-1
+function enkripsiBlok(blok, kunci) {
+  const { k1, k2 } = buatSubkunci(terimaBit(kunci, 10));
+  return prosesBlok(terimaBit(blok, 8), k1, k2);
+}
+
+// Dekripsi satu blok 8 bit: sama dengan enkripsi, tetapi K2 dipakai lebih dulu
+function dekripsiBlok(blok, kunci) {
+  const { k1, k2 } = buatSubkunci(terimaBit(kunci, 10));
+  return prosesBlok(terimaBit(blok, 8), k2, k1);
+}
+
 module.exports = {
   P10, P8, IP, IP_INV, EP, P4, S0, S1,
   bitDariString,
@@ -77,4 +135,9 @@ module.exports = {
   permutasi,
   geserKiri,
   buatSubkunci,
+  xor,
+  cariSbox,
+  fungsiF,
+  enkripsiBlok,
+  dekripsiBlok,
 };
