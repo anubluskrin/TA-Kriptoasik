@@ -76,6 +76,7 @@ label {
 
 input[type="text"],
 input[type="password"],
+select,
 textarea {
   width: 100%;
   max-width: 720px;
@@ -212,4 +213,14 @@ body.terkunci .konten {
 h2 {
   margin: 28px 0 0;
   font-size: 17px;
+}
+
+.baris-centang {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status {
+  white-space: pre-wrap;
 }

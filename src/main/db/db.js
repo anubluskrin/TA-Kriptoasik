@@ -24,6 +24,28 @@ CREATE TABLE IF NOT EXISTS pesan_penting (
   waktu INTEGER NOT NULL,
   cipher BLOB NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS percakapan (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  kontak TEXT NOT NULL,
+  kcv TEXT NOT NULL,
+  kunci_enc BLOB NOT NULL,
+  seq_kirim INTEGER NOT NULL DEFAULT 0,
+  seq_terima INTEGER NOT NULL DEFAULT 0,
+  dibuat INTEGER NOT NULL,
+  UNIQUE (user_id, kontak)
+);
+
+CREATE TABLE IF NOT EXISTS pesan (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  percakapan_id INTEGER NOT NULL REFERENCES percakapan(id),
+  arah TEXT NOT NULL,
+  seq INTEGER NOT NULL,
+  waktu INTEGER NOT NULL,
+  penting INTEGER NOT NULL DEFAULT 0,
+  cipher BLOB NOT NULL
+);
 `;
 
 function buka(berkas) {

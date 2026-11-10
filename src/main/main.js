@@ -2,7 +2,15 @@ const { app, BrowserWindow, session } = require('electron');
 const path = require('node:path');
 const { daftarkanSemuaIpc } = require('./ipc');
 const db = require('./db/db');
+
 const sesiLogin = require('./auth/session');
+
+// Untuk uji dua akun di satu laptop: npx electron . --data-dir=D:\tes-ujang
+// Tanpa bendera ini, aplikasi memakai folder data bawaan.
+const argDataDir = process.argv.find((a) => a.startsWith('--data-dir='));
+if (argDataDir) {
+  app.setPath('userData', argDataDir.slice('--data-dir='.length));
+}
 
 function createWindow() {
   const win = new BrowserWindow({

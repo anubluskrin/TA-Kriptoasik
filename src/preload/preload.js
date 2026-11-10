@@ -30,5 +30,11 @@ contextBridge.exposeInMainWorld('api', {
 
   dongleStatus: () => ipcRenderer.invoke('dongle:status'),
   onDongleDicabut: (pemanggil) => ipcRenderer.on('event:dongle-dicabut', () => pemanggil()),
+
+  chatDaftar: () => ipcRenderer.invoke('chat:daftar'),
+  chatBuat: (kontak, passphrase) => ipcRenderer.invoke('chat:buat', kontak, passphrase),
+  chatKirim: (id, teks, penting) => ipcRenderer.invoke('chat:kirim', id, teks, penting),
+  chatImpor: () => ipcRenderer.invoke('chat:impor'),
+  chatRiwayat: (id) => ipcRenderer.invoke('chat:riwayat', id),
   
 });

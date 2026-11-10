@@ -41,6 +41,7 @@
       <button class="menu-item" data-page="file">File</button>
       <button class="menu-item" data-page="gambar">Gambar</button>
       <button class="menu-item" data-page="aset">Aset</button>
+       <button class="menu-item" data-page="chat">Percakapan</button>
       <button class="menu-item" data-page="arsip">Pesan Penting</button>
       <button class="menu-item" data-page="webcam">Uji Webcam</button>
     </nav>
@@ -183,6 +184,38 @@
 
       <h2>Isi rantai</h2>
       <pre id="aset-rantai" class="keluaran"></pre>
+    </section>
+
+        <!-- Percakapan -->
+    <section id="page-chat" class="page">
+      <h1>Percakapan</h1>
+      <p>Kirim pesan ke pengguna di laptop lain. Kedua pihak menyepakati satu passphrase di luar aplikasi. Pesan dikirim sebagai berkas .svmsg yang dipindahkan secara manual.</p>
+
+      <h2>Buat percakapan baru</h2>
+      <label for="chat-kontak">Username kontak (akun di laptop lawan bicara)</label>
+      <input id="chat-kontak" type="text" autocomplete="off" />
+      <label for="chat-passphrase">Passphrase bersama (minimal 8 karakter)</label>
+      <input id="chat-passphrase" type="password" autocomplete="off" />
+      <div class="baris-tombol">
+        <button id="chat-buat" class="aksi">Buat percakapan</button>
+      </div>
+
+      <h2>Kirim dan terima</h2>
+      <label for="chat-pilih">Percakapan</label>
+      <select id="chat-pilih"></select>
+      <p id="chat-kcv" class="status"></p>
+
+      <label for="chat-teks">Pesan</label>
+      <textarea id="chat-teks" rows="4"></textarea>
+      <label class="baris-centang"><input id="chat-penting" type="checkbox" /> Tandai sebagai penting</label>
+      <div class="baris-tombol">
+        <button id="chat-kirim" class="aksi">Buat berkas pesan (.svmsg)</button>
+        <button id="chat-impor" class="aksi sekunder">Impor berkas pesan (.svmsg)</button>
+      </div>
+      <p id="chat-status" class="status"></p>
+
+      <h2>Riwayat</h2>
+      <pre id="chat-riwayat" class="keluaran"></pre>
     </section>
 
         <!-- Pesan Penting -->

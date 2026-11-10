@@ -97,8 +97,13 @@ async function daftarkan() {
   const { drive, serial, model } = daftar[0];
   if (!serial) throw new Error('Serial flashdisk tidak terbaca, gunakan flashdisk lain');
 
-  const secret = crypto.randomBytes(32);
-  fs.writeFileSync(jalurBerkas(drive), JSON.stringify({ versi: 1, secret: secret.toString('hex') }));
+    // Bila flashdisk sudah berisi .svkey yang valid, rahasianya dipakai ulang (tidak ditimpa),
+  // supaya akun lain yang sudah memakai flashdisk ini tidak terkunci.
+  let secret = bacaSecret(drive);
+  if (!secret) {
+    secret = crypto.randomBytes(32);
+    fs.writeFileSync(jalurBerkas(drive), JSON.stringify({ versi: 1, secret: secret.toString('hex') }));
+  }
   return { secret, tag: hitungTag(secret, serial), drive, serial, model };
 }
 
