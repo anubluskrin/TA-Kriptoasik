@@ -242,6 +242,7 @@ document.getElementById('aset-reset').addEventListener('click', () => {
 // Muat rantai yang tersimpan (dipanggil setelah login berhasil)
 function muatAset() {
   jalankanAset(() => window.api.asetStatus());
+}
 
   // Halaman Pesan Penting
 const elArsipLabel = document.getElementById('arsip-label');
@@ -368,7 +369,7 @@ async function periksaStatusLogin() {
 }
 
 periksaStatusLogin();
-}
+
 
 // Dongle
 const elLoginDongle = document.getElementById('login-dongle');
