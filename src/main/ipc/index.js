@@ -7,6 +7,7 @@ const asetIpc = require('./aset.ipc');
 const arsipIpc = require('./arsip.ipc');
 const dongleIpc = require('./dongle.ipc');
 const chatIpc = require('./chat.ipc');
+const wajahIpc = require('./wajah.ipc');
 const { daftarkanDenganGerbang } = require('./gerbang');
 
 function daftarkanSemuaIpc() {
@@ -21,6 +22,7 @@ function daftarkanSemuaIpc() {
     arsipIpc.daftarkan();
     dongleIpc.daftarkan();
     chatIpc.daftarkan();
+    wajahIpc.daftarkan();
   });
 }
 

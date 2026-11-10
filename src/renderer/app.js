@@ -322,6 +322,7 @@ function masukAplikasi(username) {
   tampilkanHalaman('beranda');
   muatAset();
   muatArsip();
+  muatStatusWajah();
   muatPercakapan();
 }
 
@@ -343,6 +344,10 @@ async function prosesLogin() {
     elLoginStatus.textContent = 'Gagal: ' + r.galat;
     elLoginStatus.className = 'status galat';
     elLoginPass.value = '';
+    return;
+  }
+  if (r.perluWajah) {
+    mulaiLoginWajah();
     return;
   }
   masukAplikasi(r.username);

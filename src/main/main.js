@@ -5,6 +5,9 @@ const db = require('./db/db');
 
 const sesiLogin = require('./auth/session');
 
+const protokolModel = require('./security/protokolModel');
+protokolModel.daftarkanSkema();
+
 // Untuk uji dua akun di satu laptop: npx electron . --data-dir=D:\tes-ujang
 // Tanpa bendera ini, aplikasi memakai folder data bawaan.
 const argDataDir = process.argv.find((a) => a.startsWith('--data-dir='));
@@ -27,6 +30,8 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+    protokolModel.pasangPenangan();
+    
   // Daftarkan semua kanal IPC sebelum jendela dibuat
     // Buka basis data lalu daftarkan semua kanal IPC sebelum jendela dibuat
   db.buka(path.join(app.getPath('userData'), 'securevault.db'));

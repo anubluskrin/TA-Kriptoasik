@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' svmodel:; img-src 'self' data: blob:; media-src 'self' blob:" />
   <title>SecureVault</title>
   <link rel="stylesheet" href="styles/app.css" />
 </head>
@@ -26,6 +26,16 @@
 
       <p id="login-dongle" class="status"></p>
 
+      <div id="login-wajah" class="sembunyi">
+        <p class="status">Verifikasi wajah</p>
+        <video id="video-login" class="pratinjau-kamera" muted playsinline></video>
+        <p id="login-wajah-status" class="status"></p>
+        <div class="baris-tombol">
+          <button id="login-wajah-tombol" class="aksi">Verifikasi wajah</button>
+          <button id="login-wajah-batal">Batal</button>
+        </div>
+      </div>
+
       <div class="baris-tombol">
         <button id="login-tombol" class="aksi">Masuk</button>
       </div>
@@ -43,7 +53,7 @@
       <button class="menu-item" data-page="aset">Aset</button>
        <button class="menu-item" data-page="chat">Percakapan</button>
       <button class="menu-item" data-page="arsip">Pesan Penting</button>
-      <button class="menu-item" data-page="webcam">Uji Webcam</button>
+      <button class="menu-item" data-page="webcam">Face Recognition</button>
     </nav>
     <div class="pengguna">
       <p id="nama-pengguna" class="nama-pengguna"></p>
@@ -249,16 +259,25 @@
 
     <!-- Uji Webcam (sementara, dipindah dari halaman awal) -->
     <section id="page-webcam" class="page">
-      <h1>Uji Webcam</h1>
+      <h2>Face Recognition</h2>
+      <p id="info-wajah" class="status"></p>
+      <video id="video-wajah" class="pratinjau-kamera" muted playsinline></video>
       <div class="baris-tombol">
-        <button id="btn" class="aksi">Nyalakan webcam</button>
+        <button id="wajah-kamera" class="aksi">Nyalakan kamera</button>
+        <button id="wajah-matikan">Matikan kamera</button>
       </div>
-      <p id="status" class="status"></p>
-      <video id="video" width="640" height="480" autoplay muted playsinline></video>
+      <div class="baris-tombol">
+        <button id="wajah-daftar" class="aksi">Daftarkan wajah (3 pengambilan)</button>
+        <button id="wajah-uji">Uji skor</button>
+        <button id="wajah-hapus">Hapus wajah</button>
+      </div>
+      <p id="status-wajah" class="status"></p>
     </section>
   </main>
 
-  <script src="webcam-test.js"></script>
-  <script src="app.js"></script>
+    <script src="../../node_modules/@vladmandic/human/dist/human.js"></script>
+    <script src="wajah.js"></script>
+    <script src="app.js"></script>
+    <script src="wajah-ui.js"></script>
 </body>
 </html>

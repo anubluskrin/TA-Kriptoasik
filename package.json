@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@noble/ciphers": "^1.3.0",
+    "@vladmandic/human": "^3.3.6",
     "pngjs": "^7.0.0",
     "ws": "^8.22.1"
   }

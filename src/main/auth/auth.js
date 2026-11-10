@@ -82,10 +82,14 @@ async function masuk(username, password) {
     // Kunci master memerlukan password DAN rahasia di dongle
   const gabungan = password + '\u0000' + dg.secret.toString('hex');
   const kunciMaster = await turunkanKunci(gabungan, Buffer.from(user.kdf_salt, 'hex'));
+
+  const punyaWajah = Boolean(user.wajah_embedding && user.wajah_embedding.length > 0);
   session.mulai(
     { id: user.id, username: user.username, dongle: { drive: dg.drive, serial: dg.serial } },
-    kunciMaster
+    kunciMaster,
+    { tertunda: punyaWajah }
   );
+
   dg.secret.fill(0);
 }
 

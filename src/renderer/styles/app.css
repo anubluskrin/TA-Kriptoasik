@@ -224,3 +224,16 @@ h2 {
 .status {
   white-space: pre-wrap;
 }
+
+.sembunyi {
+  display: none;
+}
+
+.pratinjau-kamera {
+  display: block;
+  width: 320px;
+  max-width: 100%;
+  background: #000;
+  border-radius: 8px;
+  margin: 8px 0;
+}
