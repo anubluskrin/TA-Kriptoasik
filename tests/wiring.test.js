@@ -11,7 +11,9 @@ const baca = (...bagian) => fs.readFileSync(path.join(akar, ...bagian), 'utf8');
 
 const html = baca('src/renderer/index.html');
 const appJs = baca('src/renderer/app.js');
-const webcamJs = baca('src/renderer/webcam-test.js');
+// Semua skrip renderer menurut urutan di index.html (kecuali pustaka Human dari node_modules)
+const daftarSkrip = [...html.matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]).filter((src) => !src.includes('node_modules'));
+const rendererJs = daftarSkrip.map((src) => baca('src/renderer', src)).join('\n');
 const preload = baca('src/preload/preload.js');
 
 function bacaSemuaIpc() {
@@ -22,7 +24,7 @@ function bacaSemuaIpc() {
 describe('sambungan antar file', () => {
   it('semua id yang dipakai JavaScript ada di index.html', () => {
     const ids = new Set([...html.matchAll(/id="([^"]+)"/g)].map((m) => m[1]));
-    const dipakai = new Set([...(appJs + webcamJs).matchAll(/getElementById\('([^']+)'\)/g)].map((m) => m[1]));
+    const dipakai = new Set([...(appJs + rendererJs).matchAll(/getElementById\('([^']+)'\)/g)].map((m) => m[1]));
     expect([...dipakai].filter((id) => !ids.has(id))).toEqual([]);
   });
 
@@ -34,7 +36,7 @@ describe('sambungan antar file', () => {
 
   it('semua window.api yang dipakai tampilan didefinisikan di preload', () => {
     const didefinisikan = new Set([...preload.matchAll(/^\s*(\w+):/gm)].map((m) => m[1]));
-    const dipakai = new Set([...appJs.matchAll(/window\.api\.(\w+)/g)].map((m) => m[1]));
+    const dipakai = new Set([...rendererJs.matchAll(/window\.api\.(\w+)/g)].map((m) => m[1]));
     expect([...dipakai].filter((nama) => !didefinisikan.has(nama))).toEqual([]);
   });
 
@@ -48,7 +50,7 @@ describe('sambungan antar file', () => {
   it('semua kanal terlindungi gerbang login, kecuali yang memang harus terbuka', () => {
     const gerbang = baca('src/main/ipc/gerbang.js');
     const terbuka = [...gerbang.match(/TERBUKA = new Set\(\[(.*?)\]\)/s)[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
-    expect(terbuka.sort()).toEqual(['app:ping', 'auth:daftar', 'auth:keluar', 'auth:masuk', 'auth:status', 'dongle:status']);
+    expect(terbuka.sort()).toEqual(['app:ping', 'auth:daftar', 'auth:keluar', 'auth:masuk', 'auth:status','auth:wajah', 'dongle:status']);
   });
 });
 
@@ -93,7 +95,7 @@ describe('app.js dijalankan dengan DOM tiruan', () => {
       console,
     };
     vm.createContext(konteks);
-    vm.runInContext(appJs, konteks);
+    for (const src of daftarSkrip) vm.runInContext(baca('src/renderer', src), konteks, { filename: src });
     return { panggilan, pendengar, document };
   }
 
@@ -101,7 +103,8 @@ describe('app.js dijalankan dengan DOM tiruan', () => {
     const { panggilan, pendengar } = jalankanApp();
     expect(panggilan.some(([nama]) => nama === 'authStatus')).toBe(true);
     for (const id of ['login-tombol', 'btn-keluar', 'btn-ping', 'pesan-enkripsi', 'pesan-dekripsi', 'file-enkripsi',
-      'file-dekripsi', 'gambar-sisipkan', 'gambar-ekstrak', 'aset-reset', 'arsip-simpan', 'arsip-buka']) {
+      'file-dekripsi', 'gambar-sisipkan', 'gambar-ekstrak', 'aset-reset', 'arsip-simpan', 'arsip-buka',
+      'login-wajah-tombol', 'login-wajah-batal', 'wajah-kamera', 'wajah-daftar', 'wajah-uji', 'wajah-hapus']) {
       expect(pendengar[`${id}:click`], `tombol ${id} tidak punya pendengar klik`).toBeTruthy();
     }
   });

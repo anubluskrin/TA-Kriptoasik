@@ -44,10 +44,13 @@ function kapasitasByte(png) {
 
 // Deretan posisi acak (tidak berulang) untuk `jumlah` bit isi, di luar area header.
 // Pengacakan Fisher-Yates sebagian, bilangan acaknya dari HMAC-SHA256(kunciAcak, penghitung).
+//
+// Dua cara penyimpanan dengan hasil yang identik:
+//   - pesan kecil dibanding gambar: hanya posisi yang ditukar dicatat di Map, jadi memori
+//     sebanding dengan panjang pesan (gambar 40 juta piksel tidak butuh larik 480 MB);
+//   - pesan besar dibanding gambar: larik penuh lebih cepat dan ukurannya tetap kecil.
 function posisiAcak(kunciAcak, totalKanal, jumlah) {
   const sisa = totalKanal - BIT_HEADER;
-  const peta = new Uint32Array(sisa);
-  for (let i = 0; i < sisa; i++) peta[i] = BIT_HEADER + i;
 
   let penghitung = 0;
   let blok = Buffer.alloc(0);
@@ -64,13 +67,27 @@ function posisiAcak(kunciAcak, totalKanal, jumlah) {
     return nilai;
   }
 
+  if (jumlah * 8 >= sisa) {
+    const peta = new Uint32Array(sisa);
+    for (let i = 0; i < sisa; i++) peta[i] = BIT_HEADER + i;
+    for (let i = 0; i < jumlah; i++) {
+      const j = i + (acak32() % (sisa - i));
+      const tmp = peta[i];
+      peta[i] = peta[j];
+      peta[j] = tmp;
+    }
+    return peta.subarray(0, jumlah);
+  }
+
+  const tertukar = new Map(); // indeks -> nilai yang sedang menempati indeks itu
+  const nilaiDi = (k) => (tertukar.has(k) ? tertukar.get(k) : BIT_HEADER + k);
+  const hasil = new Uint32Array(jumlah);
   for (let i = 0; i < jumlah; i++) {
     const j = i + (acak32() % (sisa - i));
-    const tmp = peta[i];
-    peta[i] = peta[j];
-    peta[j] = tmp;
+    hasil[i] = nilaiDi(j);
+    if (j !== i) tertukar.set(j, nilaiDi(i)); // indeks i tidak akan dibaca lagi
   }
-  return peta.subarray(0, jumlah);
+  return hasil;
 }
 
 function tulisBit(data, n, bit) {
@@ -185,4 +202,4 @@ async function ekstrak(bufferPng, passphrase) {
   }
 }
 
-module.exports = { sisipkan, ekstrak, kapasitasByte, hitungPsnr };
+module.exports = { sisipkan, ekstrak, kapasitasByte, hitungPsnr, posisiAcak };

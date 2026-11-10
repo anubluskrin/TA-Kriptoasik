@@ -30,15 +30,25 @@ async function daftar(username, password) {
   periksaPassword(password);
   if (adaAkun()) throw new Error('Akun sudah ada, pendaftaran ditutup');
 
-  const dg = await dongle.daftarkan(); // menulis .svkey ke flashdisk
+  // Urutan penting: siapkan dongle (belum menulis) -> simpan akun -> tulis .svkey.
+  // Bila penulisan gagal, akun dibatalkan sehingga tidak ada akun tanpa dongle.
+  const dg = await dongle.siapkan();
   const h = await buatHash(password);
   const kdfSalt = crypto.randomBytes(16).toString('hex');
-  db.ambil()
+  const hasil = db.ambil()
     .prepare(
       'INSERT INTO users (username, pw_salt, pw_hash, pw_iterasi, kdf_salt, dongle_tag, dibuat) VALUES (?, ?, ?, ?, ?, ?, ?)'
     )
     .run(username, h.salt, h.hash, h.iterasi, kdfSalt, dg.tag, Date.now());
-  dg.secret.fill(0);
+
+  try {
+    dongle.tulis(dg);
+  } catch (err) {
+    db.ambil().prepare('DELETE FROM users WHERE id = ?').run(hasil.lastInsertRowid);
+    throw new Error('Gagal menulis kunci ke flashdisk: ' + err.message);
+  } finally {
+    dg.secret.fill(0);
+  }
 }
 
 async function masuk(username, password) {
