@@ -86,9 +86,11 @@ async function status() {
   return { jumlah: daftar.length, drive: daftar[0] || null };
 }
 
-// Menyiapkan flashdisk sebagai dongle (dipakai saat membuat akun).
+/// Menyiapkan data dongle TANPA menulis apa pun ke flashdisk (dipakai saat membuat akun).
 // Syarat: tepat satu flashdisk USB terpasang.
-async function daftarkan() {
+// Bila flashdisk sudah berisi .svkey yang valid, rahasianya dipakai ulang (tidak ditimpa),
+// supaya akun lain yang sudah memakai flashdisk ini tidak terkunci.
+async function siapkan() {
   const daftar = await penyedia.daftarDrive();
   if (daftar.length === 0) throw new Error('Flashdisk dongle belum terpasang');
   if (daftar.length > 1) {
@@ -97,14 +99,24 @@ async function daftarkan() {
   const { drive, serial, model } = daftar[0];
   if (!serial) throw new Error('Serial flashdisk tidak terbaca, gunakan flashdisk lain');
 
-    // Bila flashdisk sudah berisi .svkey yang valid, rahasianya dipakai ulang (tidak ditimpa),
-  // supaya akun lain yang sudah memakai flashdisk ini tidak terkunci.
   let secret = bacaSecret(drive);
-  if (!secret) {
-    secret = crypto.randomBytes(32);
-    fs.writeFileSync(jalurBerkas(drive), JSON.stringify({ versi: 1, secret: secret.toString('hex') }));
-  }
-  return { secret, tag: hitungTag(secret, serial), drive, serial, model };
+  const sudahAda = secret !== null;
+  if (!sudahAda) secret = crypto.randomBytes(32);
+  return { secret, tag: hitungTag(secret, serial), drive, serial, model, sudahAda };
+}
+
+// Menulis berkas .svkey ke flashdisk bila belum ada. Dipanggil SETELAH akun tersimpan di basis data,
+// supaya kegagalan menyimpan akun tidak meninggalkan flashdisk berisi kunci tanpa akun.
+function tulis(dg) {
+  if (dg.sudahAda) return;
+  fs.writeFileSync(jalurBerkas(dg.drive), JSON.stringify({ versi: 1, secret: dg.secret.toString('hex') }));
+}
+
+// Gabungan siapkan + tulis (perilaku lama)
+async function daftarkan() {
+  const dg = await siapkan();
+  tulis(dg);
+  return dg;
 }
 
 // Mencari flashdisk yang cocok dengan dongle_tag di basis data.
@@ -136,4 +148,4 @@ async function serialMasihAda(serial) {
   return daftar.some((d) => d.serial === serial);
 }
 
-module.exports = { penyedia, status, daftarkan, verifikasi, adaBerkasKunci, serialMasihAda };
+module.exports = { penyedia, status, siapkan, tulis, daftarkan, verifikasi, adaBerkasKunci, serialMasihAda };

@@ -55,11 +55,24 @@ describe('superCipher', () => {
     expect(tahap1).toBe('LXFOPVEFRNHR');
   });
 
-  it('kunci S-DES salah tidak mengembalikan plaintext', () => {
+  it('kunci S-DES salah: ditolak atau menghasilkan teks yang berbeda', () => {
     const iv = Buffer.from([0x5a]);
     const c = superCipher.encrypt('rahasia negara', { ...KUNCI, iv });
-    const hasil = superCipher.decrypt(c.hasil, { ...KUNCI, kunciSdes: '0000000001' }).hasil;
+    let hasil = null;
+    try {
+      hasil = superCipher.decrypt(c.hasil, { ...KUNCI, kunciSdes: '0000000001' }).hasil;
+    } catch {
+      // ditolak juga termasuk perilaku yang benar
+    }
     expect(hasil).not.toBe('rahasia negara');
+  });
+
+  it('kunci S-DES salah pada pesan yang cukup panjang ditolak dengan pesan yang jelas', () => {
+    const iv = Buffer.from([0x5a]);
+    const c = superCipher.encrypt('transfer 100 ribu rupiah ke rekening 12345', { ...KUNCI, iv });
+    expect(() => superCipher.decrypt(c.hasil, { ...KUNCI, kunciSdes: '0000000001' })).toThrow(
+      /Dekripsi gagal/
+    );
   });
 
   it('kunci Vigenere salah tidak mengembalikan plaintext', () => {
@@ -68,11 +81,16 @@ describe('superCipher', () => {
     expect(hasil).not.toBe('rahasia negara');
   });
 
-  it('tidak ada autentikasi: ciphertext diubah tetap "berhasil" tetapi hasilnya sampah', () => {
+  it('ciphertext diubah: ditolak atau menghasilkan teks yang berbeda (bukan autentikasi sungguhan)', () => {
     const c = superCipher.encrypt('transfer 100 ribu', KUNCI);
     const mentah = Buffer.from(c.hasil, 'base64');
     mentah[3] ^= 0xff;
-    const hasil = superCipher.decrypt(mentah.toString('base64'), KUNCI).hasil;
+    let hasil = null;
+    try {
+      hasil = superCipher.decrypt(mentah.toString('base64'), KUNCI).hasil;
+    } catch {
+      // ditolak juga termasuk perilaku yang benar
+    }
     expect(hasil).not.toBe('transfer 100 ribu');
   });
 
