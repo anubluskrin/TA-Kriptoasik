@@ -4,6 +4,7 @@ const { daftarkanSemuaIpc } = require('./ipc');
 const db = require('./db/db');
 
 const sesiLogin = require('./auth/session');
+const dongleMonitor = require('./security/dongleMonitor');
 
 const protokolModel = require('./security/protokolModel');
 protokolModel.daftarkanSkema();
@@ -19,6 +20,8 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1000,
     height: 700,
+    title: 'SecureVault',
+    autoHideMenuBar: true, // menu bawaan Electron tersembunyi (tekan Alt untuk memunculkannya)
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       contextIsolation: true,
@@ -57,6 +60,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', () => {
+  dongleMonitor.berhenti();
   sesiLogin.akhiri();
   db.tutup();
 });
