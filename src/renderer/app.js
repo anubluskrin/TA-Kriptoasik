@@ -300,17 +300,25 @@ const elLoginPass = document.getElementById('login-password');
 const elLoginUlang = document.getElementById('login-ulang');
 const elLoginBarisUlang = document.getElementById('login-baris-ulang');
 const elLoginTombol = document.getElementById('login-tombol');
+const elLoginGanti = document.getElementById('login-ganti');
+const elLoginAlih = document.querySelector('.login-alih');
+const elLoginAlihTeks = document.getElementById('login-alih-teks');
 const elLoginStatus = document.getElementById('login-status');
 let modeDaftar = false;
 
-function aturModeLogin(daftar) {
+function aturModeLogin(daftar, adaAkun) {
   modeDaftar = daftar;
   elLoginJudul.textContent = daftar ? 'Buat akun' : 'Masuk';
   elLoginKeterangan.textContent = daftar
-    ? 'Belum ada akun. Buat akun pertama untuk aplikasi ini.'
+    ? adaAkun
+      ? 'Buat akun baru. Satu flashdisk boleh dipakai beberapa akun.'
+      : 'Belum ada akun. Buat akun pertama untuk aplikasi ini.'
     : 'Masukkan username dan password.';
   elLoginBarisUlang.style.display = daftar ? 'block' : 'none';
   elLoginTombol.textContent = daftar ? 'Buat akun dan masuk' : 'Masuk';
+  elLoginAlih.style.display = adaAkun ? 'block' : 'none';
+  elLoginAlihTeks.textContent = daftar ? 'Sudah punya akun?' : 'Belum punya akun?';
+  elLoginGanti.textContent = daftar ? 'Masuk' : 'Daftar';
 }
 
 function masukAplikasi(username) {
@@ -370,9 +378,16 @@ async function periksaStatusLogin() {
   if (s.ok && s.masuk) {
     masukAplikasi(s.username);
   } else {
-    aturModeLogin(!(s.ok && s.adaAkun));
+    aturModeLogin(!(s.ok && s.adaAkun), Boolean(s.ok && s.adaAkun));
   }
 }
+
+elLoginGanti.addEventListener('click', () => {
+  aturModeLogin(!modeDaftar, true);
+  elLoginPass.value = '';
+  elLoginUlang.value = '';
+  elLoginStatus.textContent = '';
+});
 
 periksaStatusLogin();
 

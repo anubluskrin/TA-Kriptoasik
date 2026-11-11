@@ -24,11 +24,14 @@ function periksaPassword(password) {
   }
 }
 
-// Akun pertama dibuat saat aplikasi pertama kali dipakai. Setelah itu pendaftaran ditutup.
+// Beberapa akun boleh dibuat di satu aplikasi, dan boleh memakai flashdisk yang sama
+// (rahasia .svkey yang sudah ada dipakai ulang oleh dongle.siapkan).
 async function daftar(username, password) {
   periksaUsername(username);
   periksaPassword(password);
-  if (adaAkun()) throw new Error('Akun sudah ada, pendaftaran ditutup');
+  if (db.ambil().prepare('SELECT 1 FROM users WHERE username = ?').get(username)) {
+    throw new Error('Username sudah dipakai');
+  }
 
   // Urutan penting: siapkan dongle (belum menulis) -> simpan akun -> tulis .svkey.
   // Bila penulisan gagal, akun dibatalkan sehingga tidak ada akun tanpa dongle.
