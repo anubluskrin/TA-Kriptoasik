@@ -60,13 +60,15 @@ grup('auth, dongle, sesi, dan pesan penting (dengan flashdisk palsu)', () => {
     await expect(auth.daftar('hasan', PASSWORD)).rejects.toThrow(/Terdeteksi 2 flashdisk/);
   });
 
-  it('daftar menulis .svkey ke flashdisk dan menyimpan akun; pendaftaran lalu ditutup', async () => {
+  it('daftar menulis .svkey ke flashdisk dan menyimpan akun; akun kedua boleh, username kembar ditolak', async () => {
     await auth.daftar('hasan', PASSWORD);
     expect(auth.adaAkun()).toBe(true);
     const isi = JSON.parse(fs.readFileSync(path.join(flashA, '.svkey'), 'utf8'));
     expect(isi.versi).toBe(1);
     expect(isi.secret).toMatch(/^[0-9a-f]{64}$/);
-    await expect(auth.daftar('lain', 'password-kuat-2')).rejects.toThrow(/pendaftaran ditutup/);
+    await auth.daftar('lain', 'password-kuat-2'); // multi-akun: akun kedua boleh
+    expect(jumlahAkun()).toBe(2);
+    await expect(auth.daftar('lain', 'password-kuat-3')).rejects.toThrow(/Username sudah dipakai/);
   }, 20000);
 
   it('flashdisk yang sudah berisi .svkey dipakai ulang, tidak ditimpa (akun kedua di folder data lain)', async () => {
