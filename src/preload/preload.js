@@ -43,5 +43,9 @@ contextBridge.exposeInMainWorld('api', {
   chatKirim: (id, teks, penting) => ipcRenderer.invoke('chat:kirim', id, teks, penting),
   chatImpor: () => ipcRenderer.invoke('chat:impor'),
   chatRiwayat: (id) => ipcRenderer.invoke('chat:riwayat', id),
+  chatKirimBerkas: (id) => ipcRenderer.invoke('chat:kirimBerkas', id),
+  chatTerimaBerkas: (id) => ipcRenderer.invoke('chat:terimaBerkas', id),
+  chatKirimGambar: (id, pesan) => ipcRenderer.invoke('chat:kirimGambar', id, pesan),
+  chatTerimaGambar: (id) => ipcRenderer.invoke('chat:terimaGambar', id),
   
 });

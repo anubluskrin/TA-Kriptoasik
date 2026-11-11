@@ -78,6 +78,11 @@ function catatMasuk(percakapanId, seq, waktu, teks, kunciDb) {
   simpanPesan(percakapanId, 'masuk', seq, waktu, false, teks, kunciDb);
 }
 
+// Catatan riwayat untuk berkas dan gambar (nomor urut 0, tidak memengaruhi nomor urut pesan teks)
+function catatCatatan(percakapanId, arah, waktu, teks, kunciDb) {
+  simpanPesan(percakapanId, arah, 0, waktu, false, teks, kunciDb);
+}
+
 function riwayat(percakapanId, kunciDb) {
   return db.ambil()
     .prepare('SELECT arah, seq, waktu, penting, cipher FROM pesan WHERE percakapan_id = ? ORDER BY waktu, id')
@@ -91,4 +96,4 @@ function riwayat(percakapanId, kunciDb) {
     }));
 }
 
-module.exports = { buat, daftar, ambil, cariKontak, catatKeluar, catatMasuk, riwayat };
+module.exports = { buat, daftar, ambil, cariKontak, catatKeluar, catatMasuk, catatCatatan, riwayat };

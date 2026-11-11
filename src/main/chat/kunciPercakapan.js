@@ -36,8 +36,13 @@ function subkunci(master) {
     mac: turunan('mac'),
     kcv: turunan('kcv').subarray(0, 3).toString('hex').toUpperCase(),
     vigenere: kunciVigenere,
-    sdes: kunciSdes,
+        sdes: kunciSdes,
+    // Pengganti passphrase untuk berkas (AES-256-GCM) dan gambar (stegano). Kedua laptop
+    // menurunkan nilai yang sama dari kunci percakapan, jadi tidak ada passphrase tambahan.
+    berkas: turunan('berkas').toString('hex'),
+    gambar: turunan('gambar').toString('hex'),
   };
+  
 }
 
 module.exports = { hitungSalt, turunkanMaster, subkunci };

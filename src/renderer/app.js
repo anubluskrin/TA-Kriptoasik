@@ -459,7 +459,8 @@ async function perbaruiRiwayat() {
         .map((m) => {
           const arah = m.arah === 'keluar' ? 'kirim' : 'terima';
           const waktu = new Date(m.waktu).toLocaleString('id-ID');
-          return `[${arah} #${m.seq}  ${waktu}]${m.penting ? ' (penting)' : ''}\n${m.teks}`;
+          const nomor = m.seq ? '#' + m.seq : 'media';
+          return `[${arah} ${nomor}  ${waktu}]${m.penting ? ' (penting)' : ''}\n${m.teks}`;
         })
         .join('\n\n')
     : '(belum ada pesan)';
@@ -534,3 +535,40 @@ document.getElementById('chat-impor').addEventListener('click', async () => {
   statusChat(r.ringkasan.join('\n'), r.diterima > 0);
   muatPercakapan();
 });
+
+// Berkas dan gambar untuk kontak
+async function jalankanMedia(pemanggil) {
+  const id = idChatDipilih();
+  if (id === null) {
+    statusChat('Gagal: pilih atau buat percakapan dulu', false);
+    return;
+  }
+  statusChat('Memproses...', true);
+  const r = await pemanggil(id);
+  if (!r.ok) {
+    statusChat('Gagal: ' + r.galat, false);
+    return;
+  }
+  if (r.dibatalkan) {
+    statusChat('Dibatalkan', true);
+    return;
+  }
+  statusChat(r.pesan, true);
+  muatPercakapan(id);
+}
+
+const elChatGambarPesan = document.getElementById('chat-gambar-pesan');
+
+document.getElementById('chat-kirim-berkas').addEventListener('click', () =>
+  jalankanMedia((id) => window.api.chatKirimBerkas(id))
+);
+document.getElementById('chat-terima-berkas').addEventListener('click', () =>
+  jalankanMedia((id) => window.api.chatTerimaBerkas(id))
+);
+document.getElementById('chat-kirim-gambar').addEventListener('click', async () => {
+  await jalankanMedia((id) => window.api.chatKirimGambar(id, elChatGambarPesan.value));
+  elChatGambarPesan.value = '';
+});
+document.getElementById('chat-terima-gambar').addEventListener('click', () =>
+  jalankanMedia((id) => window.api.chatTerimaGambar(id))
+);
