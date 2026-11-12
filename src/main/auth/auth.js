@@ -54,7 +54,7 @@ async function daftar(username, password) {
   }
 }
 
-async function masuk(username, password) {
+async function masuk(username, password, opsi = {}) {
   periksaUsername(username);
   if (typeof password !== 'string' || password.length === 0 || password.length > 100) {
     throw new Error('Password tidak valid');
@@ -100,7 +100,7 @@ async function masuk(username, password) {
   session.mulai(
     { id: user.id, username: user.username, dongle: { drive: dg.drive, serial: dg.serial } },
     kunciMaster,
-    { tertunda: punyaWajah }
+    { tertunda: punyaWajah, daftarWajah: Boolean(opsi.wajibDaftarWajah) && !punyaWajah }
   );
 
   dg.secret.fill(0);
@@ -108,6 +108,13 @@ async function masuk(username, password) {
 
 function keluar() {
   session.akhiri();
+}
+
+function batalkanPendaftaran() {
+  if (!session.menungguDaftarWajah()) throw new Error('Tidak ada pendaftaran yang menunggu');
+  const id = session.penggunaMenungguDaftar().id;
+  session.akhiri();
+  db.ambil().prepare('DELETE FROM users WHERE id = ?').run(id);
 }
 
 module.exports = { adaAkun, daftar, masuk, keluar };

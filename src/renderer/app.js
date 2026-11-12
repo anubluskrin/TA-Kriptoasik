@@ -354,8 +354,14 @@ async function prosesLogin() {
     elLoginPass.value = '';
     return;
   }
+  
+
+    if (r.perluDaftarWajah) {
+    mulaiLoginWajah('daftar');
+    return;
+  }
   if (r.perluWajah) {
-    mulaiLoginWajah();
+    mulaiLoginWajah('verifikasi');
     return;
   }
   masukAplikasi(r.username);

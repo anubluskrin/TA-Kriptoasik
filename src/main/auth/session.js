@@ -5,12 +5,14 @@ let pengguna = null;
 let kunciMaster = null;
 let tertunda = false; // true: password dan dongle benar, wajah belum diverifikasi
 let gagalWajah = 0;
+let perluDaftarWajah = false; // true: akun baru, wajah wajib didaftarkan sebelum boleh masuk
 
 function mulai(dataPengguna, kunci, opsi) {
   akhiri();
   pengguna = dataPengguna;
   kunciMaster = kunci;
   tertunda = Boolean(opsi && opsi.tertunda);
+  perluDaftarWajah = Boolean(opsi && opsi.daftarWajah);
 }
 
 function akhiri() {
@@ -18,15 +20,30 @@ function akhiri() {
   kunciMaster = null;
   pengguna = null;
   tertunda = false;
+  perluDaftarWajah = false;
   gagalWajah = 0;
 }
 
 function sudahMasuk() {
-  return pengguna !== null && kunciMaster !== null && !tertunda;
+  return pengguna !== null && kunciMaster !== null && !tertunda && !perluDaftarWajah;
 }
 
 function menungguWajah() {
   return pengguna !== null && kunciMaster !== null && tertunda;
+}
+
+function menungguDaftarWajah() {
+  return pengguna !== null && kunciMaster !== null && perluDaftarWajah;
+}
+
+function selesaikanDaftarWajah() {
+  if (!menungguDaftarWajah()) throw new Error('Tidak ada pendaftaran wajah yang menunggu');
+  perluDaftarWajah = false;
+}
+
+function penggunaMenungguDaftar() {
+  if (!menungguDaftarWajah()) throw new Error('Tidak ada pendaftaran wajah yang menunggu');
+  return pengguna;
 }
 
 function selesaikanWajah() {
@@ -63,6 +80,9 @@ module.exports = {
   akhiri,
   sudahMasuk,
   menungguWajah,
+  menungguDaftarWajah,
+  selesaikanDaftarWajah,
+  penggunaMenungguDaftar,
   selesaikanWajah,
   catatGagalWajah,
   penggunaTertunda,

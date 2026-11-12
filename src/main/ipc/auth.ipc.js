@@ -17,6 +17,7 @@ function status() {
     adaAkun: auth.adaAkun(),
     masuk,
     perluWajah: session.menungguWajah(),
+    perluDaftarWajah: session.menungguDaftarWajah(),
     username: masuk ? session.penggunaSaatIni().username : null,
   };
 }
@@ -26,9 +27,9 @@ function daftarkan() {
 
     ipcMain.handle('auth:daftar', (event, username, password) =>
     jalankan(async () => {
-      await auth.daftar(username, password);
+      await auth.daftar(username, password, { wajibDaftarWajah: true });
       await auth.masuk(username, password);
-      dongleMonitor.mulai(event.sender);
+      if (!session.menungguDaftarWajah()) dongleMonitor.mulai(event.sender);
       return status();
     })
   );
@@ -38,6 +39,13 @@ function daftarkan() {
       await auth.masuk(username, password);
       // Bila wajah diperlukan, pemantau dongle dimulai setelah wajah lolos (di wajah.ipc.js)
       if (!session.menungguWajah()) dongleMonitor.mulai(event.sender);
+      return status();
+    })
+  );
+
+    ipcMain.handle('auth:batalDaftar', () =>
+    jalankan(async () => {
+      auth.batalkanPendaftaran();
       return status();
     })
   );

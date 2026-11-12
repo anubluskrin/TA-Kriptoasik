@@ -50,7 +50,7 @@ describe('sambungan antar file', () => {
   it('semua kanal terlindungi gerbang login, kecuali yang memang harus terbuka', () => {
     const gerbang = baca('src/main/ipc/gerbang.js');
     const terbuka = [...gerbang.match(/TERBUKA = new Set\(\[(.*?)\]\)/s)[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
-    expect(terbuka.sort()).toEqual(['app:ping', 'auth:daftar', 'auth:keluar', 'auth:masuk', 'auth:status','auth:wajah', 'dongle:status']);
+    expect(terbuka.sort()).toEqual(['app:ping', 'auth:batalDaftar', 'auth:daftar', 'auth:daftarWajah', 'auth:keluar', 'auth:masuk', 'auth:selesaiDaftarWajah', 'auth:status', 'auth:ujiWajah', 'auth:wajah', 'dongle:status']);
   });
 });
 

@@ -71,7 +71,7 @@ function terdaftar() {
 }
 
 // Pendaftaran: butuh sesi penuh. Beberapa foto harus saling mirip supaya templat konsisten.
-function daftar(daftarEmbedding) {
+function simpanTemplat(idPengguna, daftarEmbedding) {
   if (!Array.isArray(daftarEmbedding) || daftarEmbedding.length < JUMLAH_FOTO_MIN || daftarEmbedding.length > JUMLAH_FOTO_MAKS) {
     throw new Error(`Perlu ${JUMLAH_FOTO_MIN} sampai ${JUMLAH_FOTO_MAKS} pengambilan wajah`);
   }
@@ -84,14 +84,32 @@ function daftar(daftarEmbedding) {
     }
   }
   const templat = rataRata(vektor);
-  db.ambil().prepare('UPDATE users SET wajah_embedding = ? WHERE id = ?').run(segel(templat), session.penggunaSaatIni().id);
+  db.ambil().prepare('UPDATE users SET wajah_embedding = ? WHERE id = ?').run(segel(templat), idPengguna);
 }
 
-// Untuk kalibrasi: skor satu pengambilan terhadap templat milik pengguna yang sedang login
-function uji(embedding) {
-  const blob = ambilBlob(session.penggunaSaatIni().id);
+// Pendaftaran ulang dari halaman Face Recognition: butuh sesi penuh
+function daftar(daftarEmbedding) {
+  simpanTemplat(session.penggunaSaatIni().id, daftarEmbedding);
+}
+
+// Pendaftaran wajah saat membuat akun. Boleh diulang sampai pengguna menekan Selesai.
+function daftarAwal(daftarEmbedding) {
+  simpanTemplat(session.penggunaMenungguDaftar().id, daftarEmbedding);
+}
+
+// Uji skor saat membuat akun, untuk kalibrasi ambang
+function ujiAwal(embedding) {
+  const blob = ambilBlob(session.penggunaMenungguDaftar().id);
   if (!blob) throw new Error('Wajah belum didaftarkan');
   return { skor: kemiripan(buka(blob), periksaEmbedding(embedding)), ambang: AMBANG };
+}
+
+// Menutup tahap pendaftaran: akun baru boleh masuk setelah templat wajah tersimpan
+function selesaiDaftar() {
+  const orang = session.penggunaMenungguDaftar();
+  if (!ambilBlob(orang.id)) throw new Error('Daftarkan wajah dulu');
+  session.selesaikanDaftarWajah();
+  return { username: orang.username };
 }
 
 function hapus() {
@@ -118,4 +136,4 @@ function verifikasi(embedding) {
   throw new Error(`Wajah tidak cocok (skor ${skor.toFixed(2)}, perlu ${AMBANG}). Sisa percobaan: ${MAKS_GAGAL - gagal}`);
 }
 
-module.exports = { AMBANG, kemiripan, terdaftar, daftar, uji, hapus, verifikasi };
+module.exports = { AMBANG, kemiripan, terdaftar, daftar, daftarAwal, uji, hapus, verifikasi };

@@ -31,10 +31,11 @@ contextBridge.exposeInMainWorld('api', {
   dongleStatus: () => ipcRenderer.invoke('dongle:status'),
 
   authWajah: (embedding) => ipcRenderer.invoke('auth:wajah', embedding),
-  wajahStatus: () => ipcRenderer.invoke('wajah:status'),
-  wajahDaftar: (daftar) => ipcRenderer.invoke('wajah:daftar', daftar),
-  wajahUji: (embedding) => ipcRenderer.invoke('wajah:uji', embedding),
-  wajahHapus: () => ipcRenderer.invoke('wajah:hapus'),
+  authDaftarWajah: (daftar) => ipcRenderer.invoke('auth:daftarWajah', daftar),
+  authUjiWajah: (embedding) => ipcRenderer.invoke('auth:ujiWajah', embedding),
+  authSelesaiDaftarWajah: () => ipcRenderer.invoke('auth:selesaiDaftarWajah'),
+  authBatalDaftar: () => ipcRenderer.invoke('auth:batalDaftar'),
+ 
 
   onDongleDicabut: (pemanggil) => ipcRenderer.on('event:dongle-dicabut', () => pemanggil()),
 
