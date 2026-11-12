@@ -112,6 +112,13 @@ function selesaiDaftar() {
   return { username: orang.username };
 }
 
+// Untuk kalibrasi: skor satu pengambilan terhadap templat milik pengguna yang sedang login
+function uji(embedding) {
+  const blob = ambilBlob(session.penggunaSaatIni().id);
+  if (!blob) throw new Error('Wajah belum didaftarkan');
+  return { skor: kemiripan(buka(blob), periksaEmbedding(embedding)), ambang: AMBANG };
+}
+
 function hapus() {
   db.ambil().prepare('UPDATE users SET wajah_embedding = NULL WHERE id = ?').run(session.penggunaSaatIni().id);
 }
@@ -136,4 +143,4 @@ function verifikasi(embedding) {
   throw new Error(`Wajah tidak cocok (skor ${skor.toFixed(2)}, perlu ${AMBANG}). Sisa percobaan: ${MAKS_GAGAL - gagal}`);
 }
 
-module.exports = { AMBANG, kemiripan, terdaftar, daftar, daftarAwal, uji, hapus, verifikasi };
+module.exports = { AMBANG, kemiripan, terdaftar, daftar, daftarAwal, ujiAwal, selesaiDaftar, uji, hapus, verifikasi };
