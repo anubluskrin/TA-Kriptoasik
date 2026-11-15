@@ -1,6 +1,6 @@
 const superCipher = require('../src/main/crypto/superCipher');
 
-const KUNCI = { kunciVigenere: 'LEMON', kunciSdes: '1010000010' };
+const KUNCI = { kunciVigenere: 'LEMON', kunciDes: '133457799BBCDFF1' };
 
 describe('superCipher', () => {
   it('round-trip untuk teks biasa', () => {
@@ -34,8 +34,8 @@ describe('superCipher', () => {
   });
 
   it('IV yang sama memberi hasil yang sama, IV berbeda memberi hasil berbeda', () => {
-    const iv1 = Buffer.from([0x11]);
-    const iv2 = Buffer.from([0x22]);
+    const iv1 = Buffer.alloc(8, 0x11);
+    const iv2 = Buffer.alloc(8, 0x22);
     const a = superCipher.encrypt('pesan yang sama', { ...KUNCI, iv: iv1 }).hasil;
     const b = superCipher.encrypt('pesan yang sama', { ...KUNCI, iv: iv1 }).hasil;
     const c = superCipher.encrypt('pesan yang sama', { ...KUNCI, iv: iv2 }).hasil;
@@ -43,10 +43,10 @@ describe('superCipher', () => {
     expect(a).not.toBe(c);
   });
 
-  it('IV disimpan di byte pertama token', () => {
-    const iv = Buffer.from([0xab]);
+  it('IV (8 byte) disimpan di awal token', () => {
+    const iv = Buffer.alloc(8, 0xab);
     const { hasil } = superCipher.encrypt('tes', { ...KUNCI, iv });
-    expect(Buffer.from(hasil, 'base64')[0]).toBe(0xab);
+    expect(Buffer.from(hasil, 'base64').subarray(0, 8).equals(iv)).toBe(true);
   });
 
   it('tahap Vigenere terlihat di rincian dan sesuai dengan vigenere.js', () => {
@@ -55,22 +55,22 @@ describe('superCipher', () => {
     expect(tahap1).toBe('LXFOPVEFRNHR');
   });
 
-  it('kunci S-DES salah: ditolak atau menghasilkan teks yang berbeda', () => {
-    const iv = Buffer.from([0x5a]);
+  it('kunci DES salah: ditolak atau menghasilkan teks yang berbeda', () => {
+    const iv = Buffer.alloc(8, 0x5a);
     const c = superCipher.encrypt('rahasia negara', { ...KUNCI, iv });
     let hasil = null;
     try {
-      hasil = superCipher.decrypt(c.hasil, { ...KUNCI, kunciSdes: '0000000001' }).hasil;
+      hasil = superCipher.decrypt(c.hasil, { ...KUNCI, kunciDes: '0000000000000001' }).hasil;
     } catch {
       // ditolak juga termasuk perilaku yang benar
     }
     expect(hasil).not.toBe('rahasia negara');
   });
 
-  it('kunci S-DES salah pada pesan yang cukup panjang ditolak dengan pesan yang jelas', () => {
-    const iv = Buffer.from([0x5a]);
+  it('kunci DES salah pada pesan yang cukup panjang ditolak dengan pesan yang jelas', () => {
+    const iv = Buffer.alloc(8, 0x5a);
     const c = superCipher.encrypt('transfer 100 ribu rupiah ke rekening 12345', { ...KUNCI, iv });
-    expect(() => superCipher.decrypt(c.hasil, { ...KUNCI, kunciSdes: '0000000001' })).toThrow(
+    expect(() => superCipher.decrypt(c.hasil, { ...KUNCI, kunciDes: '0000000000000001' })).toThrow(
       /Dekripsi gagal/
     );
   });
@@ -94,9 +94,9 @@ describe('superCipher', () => {
     expect(hasil).not.toBe('transfer 100 ribu');
   });
 
-  it('menolak kunci S-DES yang tidak valid', () => {
-    expect(() => superCipher.encrypt('x', { kunciVigenere: 'A', kunciSdes: '101' })).toThrow();
-    expect(() => superCipher.encrypt('x', { kunciVigenere: 'A', kunciSdes: '10100000X2' })).toThrow();
+  it('menolak kunci DES yang tidak valid', () => {
+    expect(() => superCipher.encrypt('x', { kunciVigenere: 'A', kunciDes: '1011' })).toThrow();
+    expect(() => superCipher.encrypt('x', { kunciVigenere: 'A', kunciDes: '133457799BBCDFFZ' })).toThrow();
     expect(() => superCipher.encrypt('x', { kunciVigenere: 'A' })).toThrow();
   });
 

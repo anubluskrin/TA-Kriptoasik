@@ -22,21 +22,20 @@ async function turunkanMaster(passphrase, userA, userB) {
 //   mac       : kunci untuk stempel keaslian pesan
 //   kcv       : kode cek kunci (6 digit hex) untuk dibandingkan di kedua laptop
 //   vigenere  : 12 huruf A-Z untuk tahap Vigenere
-//   sdes      : 10 bit untuk tahap S-DES
+//   des       : 64 bit (16- kaarakter heksadesimal) untuk tahap DES
 function subkunci(master) {
   const turunan = (label) => crypto.createHmac('sha256', master).update(label).digest();
 
   const vig = turunan('vigenere');
   const kunciVigenere = Array.from(vig.subarray(0, 12), (b) => String.fromCharCode(65 + (b % 26))).join('');
 
-  const sd = turunan('sdes');
-  const kunciSdes = (((sd[0] << 2) | (sd[1] >> 6)) & 0x3ff).toString(2).padStart(10, '0');
+  const kunciDes = turunan('des').subarray(0, 8).toString('hex').toUpperCase();
 
   return {
     mac: turunan('mac'),
     kcv: turunan('kcv').subarray(0, 3).toString('hex').toUpperCase(),
     vigenere: kunciVigenere,
-        sdes: kunciSdes,
+    des: kunciDes,
     // Pengganti passphrase untuk berkas (AES-256-GCM) dan gambar (stegano). Kedua laptop
     // menurunkan nilai yang sama dari kunci percakapan, jadi tidak ada passphrase tambahan.
     berkas: turunan('berkas').toString('hex'),

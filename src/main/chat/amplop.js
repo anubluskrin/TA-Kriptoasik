@@ -3,7 +3,7 @@ const superCipher = require('../crypto/superCipher');
 
 // Amplop pesan (isi berkas .svmsg):
 //   { v, dari, ke, seq, waktu, id, token, mac }
-// token = hasil super enkripsi (Vigenere lalu S-DES CBC lalu Base64)
+// token = hasil super enkripsi (Vigenere lalu DES CBC lalu Base64)
 // mac   = HMAC-SHA256 atas seluruh bidang lain (encrypt-then-MAC), memakai kunci mac percakapan.
 // Algoritma klasik tidak mendeteksi perubahan data, jadi MAC inilah yang menolak pesan yang
 // diubah dan pesan dengan passphrase yang salah, sebelum proses dekripsi dijalankan.
@@ -20,7 +20,7 @@ function buat({ dari, ke, seq, teks, kunci }) {
   if (typeof teks !== 'string' || teks.length === 0 || teks.length > MAKS_TEKS) {
     throw new Error(`Pesan harus 1 sampai ${MAKS_TEKS} karakter`);
   }
-  const { hasil } = superCipher.encrypt(teks, { kunciVigenere: kunci.vigenere, kunciSdes: kunci.sdes });
+  const { hasil } = superCipher.encrypt(teks, { kunciVigenere: kunci.vigenere, kunciDes: kunci.des });
   const amplop = {
     v: 1,
     dari,
@@ -60,7 +60,7 @@ function verifikasi(amplop, { saya, kontak, kunci, seqTerakhir }) {
 
   const { hasil } = superCipher.decrypt(amplop.token, {
     kunciVigenere: kunci.vigenere,
-    kunciSdes: kunci.sdes,
+    kunciDes: kunci.des,
   });
   return { teks: hasil, seq: amplop.seq, waktu: amplop.waktu };
 }

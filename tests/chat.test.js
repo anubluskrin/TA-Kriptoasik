@@ -25,7 +25,7 @@ describe('kunciPercakapan', () => {
     const master = Buffer.alloc(32, 5);
     const k = subkunci(master);
     expect(k.vigenere).toMatch(/^[A-Z]{12}$/);
-    expect(k.sdes).toMatch(/^[01]{10}$/);
+    expect(k.des).toMatch(/^[0-9A-F]{16}$/);
     expect(k.kcv).toMatch(/^[0-9A-F]{6}$/);
     expect(k.mac).toHaveLength(32);
     expect(subkunci(master)).toEqual(k);
