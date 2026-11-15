@@ -1,6 +1,6 @@
 const crypto = require('node:crypto');
 
-// Blockchain sederhana untuk mencatat kepemilikan aset.
+// Blockchain sederhana ,log audit dan pencatatan kepemilikan aset.
 // Setiap blok: { index, waktu, hashSebelumnya, data, nonce, hash }
 // hash = SHA-256 dari seluruh isi blok. Blok sah bila hash-nya diawali sejumlah angka 0
 // (proof of work) dan hashSebelumnya sama dengan hash blok sebelumnya.
@@ -59,6 +59,16 @@ function terapkan(status, data) {
     if (data.dari !== aset.pemilik) throw new Error(`Pengirim bukan pemilik aset (pemilik saat ini: ${aset.pemilik})`);
     if (data.ke === data.dari) throw new Error('Pemilik baru sama dengan pemilik lama');
     aset.pemilik = data.ke;
+    return;
+  }
+
+    // Catatan kejadian (log audit): tidak mengubah status kepemilikan aset
+  if (data.tipe === 'AUDIT') {
+    periksaTeks(data.aksi, 'Aksi', 40);
+    periksaTeks(data.pelaku, 'Pelaku', 60);
+    if (data.rincian !== undefined && (typeof data.rincian !== 'string' || data.rincian.length > 200)) {
+      throw new Error('Rincian maksimal 200 karakter');
+    }
     return;
   }
 

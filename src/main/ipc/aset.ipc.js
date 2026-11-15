@@ -2,28 +2,14 @@ const { ipcMain, app } = require('electron');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const chain = require('../chain/blockchain');
-const { tambang } = require('../chain/tambang');
-
-let sibuk = false; // mencegah dua penambangan berjalan bersamaan
+const audit = require('../chain/audit');
 
 function berkasRantai() {
   return path.join(app.getPath('userData'), 'rantai.json');
 }
 
-async function bacaRantai() {
-  try {
-    const rantai = JSON.parse(await fs.readFile(berkasRantai(), 'utf8'));
-    if (Array.isArray(rantai) && rantai.length > 0) return rantai;
-  } catch {
-    // berkas belum ada atau rusak: mulai dari blok genesis
-  }
-  return [chain.buatGenesis()];
-}
-
-async function tulisRantai(rantai) {
-  await fs.mkdir(path.dirname(berkasRantai()), { recursive: true });
-  await fs.writeFile(berkasRantai(), JSON.stringify(rantai, null, 2));
-}
+const bacaRantai = audit.bacaRantai;
+const tulisRantai = audit.tulisRantai;
 
 // Data yang dikirim ke tampilan: rantai, daftar aset, dan hasil validasi.
 // Bila rantai rusak, daftar aset hanya dihitung dari blok sebelum blok yang rusak.
@@ -48,24 +34,11 @@ async function jalankan(aksi) {
 }
 
 async function tambahTransaksi(data) {
-  if (sibuk) throw new Error('Masih menambang blok lain, coba sebentar lagi');
-  sibuk = true;
-  try {
-    const rantai = await bacaRantai();
-    if (!chain.validasiRantai(rantai).valid) {
-      throw new Error('Rantai rusak, blok baru tidak bisa ditambahkan. Gunakan Reset rantai.');
-    }
-    const draft = chain.siapkanBlok(rantai, data);
-    const { blok, ms } = await tambang(draft);
-    rantai.push(blok);
-    await tulisRantai(rantai);
-    return {
-      ...ringkasan(rantai),
-      pesan: `Blok #${blok.index} ditambang: nonce ${blok.nonce}, ${ms} ms`,
-    };
-  } finally {
-    sibuk = false;
-  }
+  const { rantai, blok, ms } = await audit.tambahBlok(data);
+  return {
+    ...ringkasan(rantai),
+    pesan: `Blok #${blok.index} ditambang: nonce ${blok.nonce}, ${ms} ms`,
+  };
 }
 
 function teks(nilai, nama) {
@@ -74,6 +47,8 @@ function teks(nilai, nama) {
 }
 
 function daftarkan() {
+  audit.aturLokasi(berkasRantai());
+
   ipcMain.handle('aset:status', () => jalankan(async () => ringkasan(await bacaRantai())));
 
   ipcMain.handle('aset:daftarkan', (event, idAset, nama, pemilik) =>
@@ -113,6 +88,7 @@ function daftarkan() {
 
       const data = rantai[nomor].data;
       if (data.tipe === 'REGISTER') data.pemilik = nilaiBersih;
+      else if (data.tipe === 'AUDIT') data.pelaku = nilaiBersih;
       else data.ke = nilaiBersih;
       await tulisRantai(rantai);
       return { ...ringkasan(rantai), pesan: `Isi blok #${nomor} diubah tanpa menghitung ulang hash` };

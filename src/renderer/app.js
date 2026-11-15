@@ -51,6 +51,7 @@ const pages = document.querySelectorAll('.page');
 function tampilkanHalaman(nama) {
   pages.forEach((p) => p.classList.toggle('active', p.id === 'page-' + nama));
   menuItems.forEach((m) => m.classList.toggle('active', m.dataset.page === nama));
+  if (nama === 'audit' && typeof muatAudit === 'function') muatAudit();
 }
 
 menuItems.forEach((m) => {
@@ -163,6 +164,7 @@ const elAsetRantai = document.getElementById('aset-rantai');
 function ringkasData(data) {
   if (data.tipe === 'REGISTER') return `REGISTER ${data.idAset} "${data.nama}" oleh ${data.pemilik}`;
   if (data.tipe === 'TRANSFER') return `TRANSFER ${data.idAset}: ${data.dari} -> ${data.ke}`;
+  if (data.tipe === 'AUDIT') return `AUDIT ${data.aksi} oleh ${data.pelaku}`;
   return data.tipe;
 }
 
@@ -243,6 +245,68 @@ document.getElementById('aset-reset').addEventListener('click', () => {
 function muatAset() {
   jalankanAset(() => window.api.asetStatus());
 }
+
+// Halaman Log Audit (memakai rantai yang sama dengan halaman Aset)
+const elAuditStatus = document.getElementById('audit-status');
+const elAuditDaftar = document.getElementById('audit-daftar');
+
+function uraianAudit(data) {
+  if (data.tipe === 'AUDIT') return `${data.aksi.padEnd(24)} ${data.pelaku}${data.rincian ? '  (' + data.rincian + ')' : ''}`;
+  return ringkasData(data);
+}
+
+function tampilkanAudit(respons) {
+  if (!respons.ok) {
+    elAuditStatus.textContent = 'Gagal: ' + respons.galat;
+    elAuditStatus.className = 'status galat';
+    return;
+  }
+  const { rantai, validasi } = respons;
+  elAuditDaftar.textContent = rantai
+    .slice(1) // blok 0 adalah genesis
+    .map((b) => {
+      const rusak = !validasi.valid && b.index === validasi.indeksRusak ? '   <-- RUSAK' : '';
+      const waktu = new Date(b.waktu).toLocaleString('id-ID', { hour12: false });
+      return `#${String(b.index).padEnd(4)} ${waktu}  ${uraianAudit(b.data)}${rusak}`;
+    })
+    .reverse() // terbaru di atas
+    .join('\n') || '(belum ada kejadian)';
+
+  const awal = respons.pesan ? respons.pesan + '. ' : '';
+  if (validasi.valid) {
+    elAuditStatus.textContent = `${awal}Rantai valid (${rantai.length - 1} kejadian tercatat)`;
+    elAuditStatus.className = 'status sukses';
+  } else {
+    elAuditStatus.textContent = `${awal}Rantai RUSAK pada blok #${validasi.indeksRusak}: ${validasi.alasan}`;
+    elAuditStatus.className = 'status galat';
+  }
+}
+
+async function jalankanAudit(aksi) {
+  elAuditStatus.textContent = 'Memproses...';
+  elAuditStatus.className = 'status';
+  try {
+    tampilkanAudit(await aksi());
+  } catch (err) {
+    tampilkanAudit({ ok: false, galat: err.message });
+  }
+}
+
+function muatAudit() {
+  jalankanAudit(() => window.api.asetStatus());
+}
+
+document.getElementById('audit-muat').addEventListener('click', muatAudit);
+document.getElementById('audit-validasi').addEventListener('click', () => jalankanAudit(() => window.api.asetValidasi()));
+document.getElementById('audit-rusakkan').addEventListener('click', () => {
+  jalankanAudit(() =>
+    window.api.asetRusakkan(
+      parseInt(document.getElementById('audit-blok-rusak').value, 10),
+      document.getElementById('audit-nilai-palsu').value
+    )
+  );
+});
+document.getElementById('audit-reset').addEventListener('click', () => jalankanAudit(() => window.api.asetReset()));
 
   // Halaman Pesan Penting
 const elArsipLabel = document.getElementById('arsip-label');

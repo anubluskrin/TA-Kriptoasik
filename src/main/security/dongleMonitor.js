@@ -1,5 +1,6 @@
 const dongle = require('./dongle');
 const session = require('../auth/session');
+const audit = require('../chain/audit');
 
 // Memantau dongle selama sesi berjalan.
 // Tiap detik: periksa berkas .svkey (cepat). Tiap 10 detik: periksa serial flashdisk.
@@ -16,9 +17,15 @@ function berhenti() {
 }
 
 function kunci(webContents) {
+  let pelaku = null;
+  try {
+    pelaku = session.penggunaSaatIni().username;
+  } catch {
+    // sesi sudah berakhir
+  }
   berhenti();
   session.akhiri();
-  if (webContents && !webContents.isDestroyed()) webContents.send('event:dongle-dicabut');
+  audit.catat('DONGLE_DICABUT', pelaku);
 }
 
 function mulai(webContents) {

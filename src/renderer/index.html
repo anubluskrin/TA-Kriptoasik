@@ -57,7 +57,8 @@
       <button class="menu-item" data-page="file">File</button>
       <button class="menu-item" data-page="gambar">Gambar</button>
       <button class="menu-item" data-page="aset">Aset</button>
-       <button class="menu-item" data-page="chat">Percakapan</button>
+      <button class="menu-item" data-page="audit">Log Audit</button>
+      <button class="menu-item" data-page="chat">Percakapan</button>
       <button class="menu-item" data-page="arsip">Pesan Penting</button>
     </nav>
     <div class="pengguna">
@@ -199,6 +200,31 @@
 
       <h2>Isi rantai</h2>
       <pre id="aset-rantai" class="keluaran"></pre>
+    </section>
+
+        <!-- Log Audit -->
+    <section id="page-audit" class="page">
+      <h1>Log Audit</h1>
+      <p>Setiap kejadian penting (login, pesan, berkas, gambar, dan transaksi aset) dicatat sebagai satu blok. Hash tiap blok memuat hash blok sebelumnya, jadi riwayat yang diubah langsung terdeteksi saat divalidasi. Isi pesan dan password tidak pernah dicatat.</p>
+
+      <div class="baris-tombol">
+        <button id="audit-muat" class="aksi">Muat ulang</button>
+        <button id="audit-validasi" class="aksi sekunder">Validasi rantai</button>
+      </div>
+      <p id="audit-status" class="status"></p>
+
+      <h2>Uji pemalsuan</h2>
+      <label for="audit-blok-rusak">Nomor blok yang dipalsukan</label>
+      <input id="audit-blok-rusak" type="text" value="1" inputmode="numeric" autocomplete="off" />
+      <label for="audit-nilai-palsu">Nama pelaku palsu</label>
+      <input id="audit-nilai-palsu" type="text" value="Penyusup" autocomplete="off" />
+      <div class="baris-tombol">
+        <button id="audit-rusakkan" class="aksi sekunder">Palsukan isi blok</button>
+        <button id="audit-reset" class="aksi sekunder">Reset rantai</button>
+      </div>
+
+      <h2>Riwayat kejadian</h2>
+      <pre id="audit-daftar" class="keluaran"></pre>
     </section>
 
         <!-- Percakapan -->
