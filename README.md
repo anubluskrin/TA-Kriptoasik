@@ -8,7 +8,7 @@ Aplikasi desktop kriptografi untuk Tugas Akhir Kriptografi, dibangun dengan **Ja
 - **Enkripsi basis data**: ChaCha20-Poly1305
 - **Steganografi gambar**: LSB acak pada PNG, isi pesan dienkripsi AES-256-GCM
 - **Blockchain sederhana**: pencatatan kepemilikan aset dengan Proof of Work
-- **Komunikasi dua arah antar dua laptop**: pertukaran berkas pesan, berkas, dan gambar terenkripsi dengan passphrase bersama
+- **Komunikasi dua arah antar dua laptop**: pertukaran berkas pesan, berkas, dan gambar terenkripsi dengan passphrase bersama.
 
 > **Catatan platform:** harus dijalankan sebagai **aplikasi desktop (Electron)**, bukan di browser. Browser tidak bisa membaca serial number flashdisk dan tidak bisa mendeteksi pencabutannya. Deteksi dongle saat ini memakai **PowerShell, jadi hanya berjalan di Windows**.
 
