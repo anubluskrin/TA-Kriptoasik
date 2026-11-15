@@ -1,14 +1,14 @@
-#  (TA-Kriptoasik)
+# Sandikarya (TA-Kriptoasik)
 
-Aplikasi desktop kriptografi untuk Tugas Akhir Kriptografi, dibangun dengan **JavaScript + Electron**. Satu aplikasi yang menggabungkan:
+**Sandikarya** (sandi + karya) adalah aplikasi desktop kriptografi untuk Tugas Akhir Kriptografi, dibangun dengan **JavaScript + Electron**. Studi kasusnya: **distribusi aset digital kreatif antar studio** (model 3D, tekstur, naskah, dan desain yang belum dirilis dipertukarkan antar dua studio dengan aman). Satu aplikasi yang menggabungkan:
 
 - **Autentikasi berlapis**: dongle flashdisk USB + password + biometrik wajah
-- **Super enkripsi teks**: Vigenère (mod 26) lalu S-DES mode CBC
+- **Super enkripsi teks**: Vigenère (mod 26) lalu DES mode CBC
 - **Enkripsi file**: AES-256-GCM (format `.enc`)
 - **Enkripsi basis data**: ChaCha20-Poly1305
 - **Steganografi gambar**: LSB acak pada PNG, isi pesan dienkripsi AES-256-GCM
-- **Blockchain sederhana**: pencatatan kepemilikan aset dengan Proof of Work
-- **Komunikasi dua arah antar dua laptop**: pertukaran berkas pesan, berkas, dan gambar terenkripsi dengan passphrase bersama.
+- **Blockchain sederhana**: registri kepemilikan aset dan **log audit** kejadian aplikasi yang tahan ubah, dengan Proof of Work
+- **Komunikasi dua arah antar dua laptop**: pertukaran berkas pesan dan berkas terenkripsi (`.enc`) serta gambar stego (`.png`) dengan passphrase bersama.
 
 > **Catatan platform:** harus dijalankan sebagai **aplikasi desktop (Electron)**, bukan di browser. Browser tidak bisa membaca serial number flashdisk dan tidak bisa mendeteksi pencabutannya. Deteksi dongle saat ini memakai **PowerShell, jadi hanya berjalan di Windows**.
 
@@ -37,11 +37,27 @@ Aplikasi desktop kriptografi untuk Tugas Akhir Kriptografi, dibangun dengan **Ja
 | Aspek | Keputusan |
 |---|---|
 | Bahasa / platform | JavaScript dengan Electron |
-| Super enkripsi teks | Vigenère (**mod 26**) lalu S-DES mode CBC |
+| Super enkripsi teks | Vigenère (**mod 26**) lalu **DES** mode CBC (menggantikan DES) |
 | Kesepakatan kunci antar laptop | **Passphrase bersama** (disepakati di luar aplikasi), karena algoritma klasik tidak asimetris |
-| Autentikasi | 3 faktor: dongle USB, password, wajah (wajah opsional per akun, wajib bila sudah didaftarkan) |
+| Autentikasi | 3 faktor: dongle USB, password, wajah (**didaftarkan saat membuat akun**, wajib untuk semua akun) |
 | Penyimpanan | SQLite bawaan Node (`node:sqlite`), seluruh data sensitif terenkripsi |
-| Transport antar laptop | **Berkas** (`.enc`, `.enc`, `.png`) yang dipindahkan secara manual (flashdisk, email, dsb.) |
+| Blockchain | Satu rantai untuk dua tujuan: registri aset (REGISTER, TRANSFER) dan **log audit** (blok `AUDIT`) |
+| Format berkas | **`.enc`** untuk pesan dan berkas terenkripsi (dibedakan oleh isinya), **`.sdk`** untuk kunci dongle, `.png` untuk gambar stego |
+| Transport antar laptop | **Berkas** (`.enc`, `.png`) yang dipindahkan secara manual (flashdisk, email, dsb.) |
+
+### Studi kasus: distribusi aset kreatif antar studio
+
+Dua studio kreatif bertukar aset yang belum dirilis di laptop yang sering dibawa keluar kantor. Kebutuhannya dan jawabannya:
+
+| Kebutuhan | Fitur |
+|---|---|
+| Hanya staf sah yang masuk; laptop yang ditinggal tidak boleh terbuka | Login tiga faktor; flashdisk dicabut, sesi langsung terkunci |
+| Pesan koordinasi tidak terbaca pihak ketiga | Super enkripsi Vigenère + DES, amplop ber-MAC |
+| Berkas aset besar harus utuh dan rahasia | AES-256-GCM (`.enc`) |
+| Catatan penting (lisensi, kesepakatan) aman di laptop | ChaCha20-Poly1305 di basis data |
+| Bukti siapa memegang hak atas aset dan siapa saja yang mengakses aplikasi | Blockchain: registri aset dan log audit; perubahan catatan lama terdeteksi |
+
+Blockchain dipakai untuk membuktikan **urutan dan keutuhan catatan**, bukan untuk kerahasiaan (itu tugas enkripsi).
 
 Pemisahan hak akses di Electron: proses utama (`main`) memegang semua kunci dan operasi kripto; tampilan (`renderer`) berjalan dengan `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`, dan hanya bisa memanggil fungsi yang diekspos `preload.js` lewat `window.api`.
 
@@ -62,8 +78,8 @@ flowchart LR
     IPC["ipc/*.ipc.js"]
     AUTH["auth/ (auth, session, password)"]
     SEC["security/ (dongle, dongleMonitor, wajah)"]
-    CRY["crypto/ (vigenere, sdes, superCipher,\nfileCipher, stegano, keys)"]
-    CHAIN["chain/ (blockchain, tambang, pow.worker)"]
+    CRY["crypto/ (vigenere, des, superCipher,\nfileCipher, stegano, keys)"]
+    CHAIN["chain/ (blockchain, audit, tambang, pow.worker)"]
     CHAT["chat/ (kunciPercakapan, amplop, media)"]
     DB["db/ (SQLite + dbCipher)"]
   end
@@ -73,7 +89,7 @@ flowchart LR
   CAM[("Kamera")] --> UI
 ```
 
-Setiap kanal IPC (kecuali `app:ping`, `auth:status`, `auth:daftar`, `auth:masuk`, `auth:keluar`, `auth:wajah`, `dongle:status`) dibungkus `gerbang.js` sehingga **ditolak bila belum login penuh**.
+Setiap kanal IPC (kecuali `app:ping`, `auth:status`, `auth:daftar`, `auth:masuk`, `auth:keluar`, `auth:wajah`, `auth:daftarWajah`, `auth:ujiWajah`, `auth:selesaiDaftarWajah`, `auth:batalDaftar`, `dongle:status`) dibungkus `gerbang.js` sehingga **ditolak bila belum login penuh**. Gerbang yang sama **mencatat kejadian ke log audit** (login, pesan, berkas, dan sebagainya) setelah kanal selesai, sehingga tidak ada fitur yang lupa mencatat.
 
 ---
 
@@ -84,6 +100,7 @@ TA-Kriptoasik/
 ├── package.json            # skrip: start, test, test:watch
 ├── vitest.config.mjs       # konfigurasi pengujian (tests/**/*.test.js)
 ├── ALUR_PENGERJAAN.md      # catatan alur pengerjaan
+├── RANCANGAN.md            # rancangan teknis lengkap
 ├── COMMIT_HISTORY.md       # riwayat commit
 ├── src/
 │   ├── main/               # proses utama Electron
@@ -95,17 +112,18 @@ TA-Kriptoasik/
 │   │   ├── security/
 │   │   │   ├── dongle.js        # deteksi flashdisk (PowerShell), .sdk, tag HMAC
 │   │   │   ├── dongleMonitor.js # pemantau pencabutan dongle
-│   │   │   ├── wajah.js         # templat wajah terenkripsi, pencocokan embedding
+│   │   │   ├── wajah.js         # pendaftaran saat buat akun, templat terenkripsi, pencocokan
 │   │   │   └── protokolModel.js # protokol svmodel:// untuk model Human
 │   │   ├── crypto/
 │   │   │   ├── vigenere.js     # Vigenère mod 26
-│   │   │   ├── sdes.js         # S-DES + mode CBC
-│   │   │   ├── superCipher.js  # Vigenère -> S-DES CBC -> Base64
+│   │   │   ├── des.js          # DES 16 putaran + mode CBC (PKCS#7)
+│   │   │   ├── superCipher.js  # Vigenère -> DES CBC -> Base64
 │   │   │   ├── fileCipher.js   # AES-256-GCM, format .enc
 │   │   │   ├── stegano.js      # LSB acak pada PNG
 │   │   │   └── keys.js         # PBKDF2-HMAC-SHA256 (200.000 iterasi)
 │   │   ├── chain/
-│   │   │   ├── blockchain.js   # blok, hash, validasi, aturan transaksi
+│   │   │   ├── blockchain.js   # blok, hash, validasi, aturan transaksi, blok AUDIT
+│   │   │   ├── audit.js        # pencatatan log audit (antrean, tidak pernah melempar galat)
 │   │   │   ├── tambang.js      # penambangan di worker thread
 │   │   │   └── pow.worker.js   # pencarian nonce
 │   │   ├── chat/
@@ -141,14 +159,15 @@ flowchart TD
   D -- tidak --> E[Gagal +1\n3x gagal = kunci 60 detik]
   D -- ya --> F[Turunkan kunci master]
   F --> G{Wajah terdaftar?}
-  G -- tidak --> H[Sesi aktif]
+  G -- tidak --> J[Panel kamera: daftar wajah\n3 pengambilan, Uji skor, Selesai]
+  J --> H[Sesi aktif]
   G -- ya --> I[Sesi tertunda: verifikasi wajah]
   I -- skor >= 0,6 --> H
   I -- gagal 5x --> X3[Sesi dibatalkan]
   H --> M[Pemantau dongle berjalan]
 ```
 
-Faktor kegagalan dongle tidak dihitung sebagai salah password. Saat sesi berjalan, `dongleMonitor` memeriksa berkas `.sdk` **tiap 1 detik** dan serial flashdisk **tiap 10 detik**. Bila dongle dicabut, kunci dan sesi dihapus dari memori dan tampilan kembali ke layar login.
+Pembuatan akun memakai alur yang sama: setelah username, password, dan flashdisk diterima, akun baru langsung diminta mendaftarkan wajah. Kegagalan dongle tidak dihitung sebagai salah password. Saat sesi berjalan, `dongleMonitor` memeriksa berkas `.sdk` **tiap 1 detik** dan serial flashdisk **tiap 10 detik**. Bila dongle dicabut, kunci dan sesi dihapus dari memori dan tampilan kembali ke layar login.
 
 ### 4.2 Hierarki kunci
 
@@ -172,22 +191,24 @@ Karena `secret` ikut menurunkan kunci master, **data lokal tidak bisa dibuka tan
 - Kunci hanya huruf; posisi kunci maju **hanya saat menemui huruf**.
 - Enkripsi: `C = (P + K) mod 26`, dekripsi: `P = (C − K) mod 26` (dengan `mod` yang selalu positif).
 
-### 5.2 S-DES (Simplified DES) — `crypto/sdes.js`
+### 5.2 DES (Data Encryption Standard) — `crypto/des.js`
 
-- Blok 8 bit, kunci 10 bit, 2 putaran Feistel.
-- **Pembangkit subkunci:** `P10` → pisah 2×5 bit → LS-1 → `P8` = **K1**; lanjut LS-2 → `P8` = **K2**.
-- **Enkripsi blok:** `IP → f_K1 → swap → f_K2 → IP⁻¹`. Fungsi `F`: `EP(kanan) XOR subkunci → S0/S1 → P4`.
-- **Dekripsi blok:** sama, dengan urutan subkunci dibalik (K2 dulu).
-- **Mode CBC** (satu byte = satu blok, tanpa padding): `C[i] = E(P[i] XOR C[i−1])`, `C[0] = IV` (1 byte acak).
+- Ditulis sendiri sesuai FIPS 46-3: blok 64 bit, kunci 64 bit (56 bit efektif), **16 putaran Feistel**, delapan S-box.
+- **Pembangkit subkunci:** `PC1` → pisah 28|28 → geser kiri sesuai jadwal → `PC2` = 16 subkunci 48 bit.
+- **Enkripsi blok:** `IP → 16 putaran (F: E → XOR subkunci → S-box → P) → tukar → FP`.
+- **Dekripsi blok:** sama, dengan urutan subkunci dibalik.
+- **Mode CBC** dengan padding **PKCS#7**: `C[i] = E(P[i] XOR C[i−1])`, `C[0] = IV` (8 byte acak).
+- Divalidasi dengan **vektor baku FIPS** (kunci `133457799BBCDFF1`, blok `0123456789ABCDEF` menghasilkan `85E813540F0AB405`) dan dibandingkan dengan OpenSSL.
+- Kunci berupa 16 karakter heksadesimal.
 
 ### 5.3 Super enkripsi teks — `crypto/superCipher.js`
 
 ```
-Enkripsi: teks → Vigenère → UTF-8 → S-DES CBC (IV acak 1 byte) → Base64( IV || ciphertext )
-Dekripsi: Base64 → pisah IV → S-DES CBC dekripsi → UTF-8 → Vigenère dekripsi
+Enkripsi: teks → Vigenère → UTF-8 → DES CBC (IV acak 8 byte) → Base64( IV || ciphertext )
+Dekripsi: Base64 → pisah IV → DES CBC dekripsi → UTF-8 → Vigenère dekripsi
 ```
 
-Kunci: Vigenère (huruf A–Z) dan S-DES (10 karakter `0/1`). Hasil juga mengembalikan `rincian` tiap tahap untuk ditampilkan di UI.
+Kunci: Vigenère (huruf A–Z) dan DES (16 karakter heksadesimal). Hasil juga mengembalikan `rincian` tiap tahap untuk ditampilkan di UI.
 
 ### 5.4 Enkripsi file — `crypto/fileCipher.js`
 
@@ -215,7 +236,7 @@ ciphertext = AES-GCM( panjangNama (2 byte) | nama berkas asli | isi berkas )
 - **Isi ciphertext** disebar ke **posisi acak tanpa pengulangan** (Fisher-Yates sebagian, bilangan acak dari HMAC-SHA256 dengan penghitung, kunci diturunkan dari passphrase). Tanpa passphrase yang benar, posisi bit tidak bisa diketahui.
 - Kualitas gambar dihitung dengan **PSNR**; kapasitas = `(piksel × 3 − 384) / 8` byte.
 
-### 5.7 Blockchain sederhana — `chain/`
+### 5.7 Blockchain sederhana: registri aset dan log audit — `chain/`
 
 - Blok: `{ index, waktu, hashSebelumnya, data, nonce, hash }`.
 - `hash = SHA-256( index | waktu | hashSebelumnya | JSON-stabil(data) | nonce )`; JSON diurutkan kuncinya agar hash deterministik.
@@ -225,7 +246,11 @@ ciphertext = AES-GCM( panjangNama (2 byte) | nama berkas asli | isi berkas )
   - `REGISTER` — mendaftarkan aset (ID unik `[A-Za-z0-9_-]{1,40}`).
   - `TRANSFER` — hanya pemilik saat ini yang boleh memindahkan aset.
 - `validasiRantai` memeriksa genesis, urutan indeks, kecocokan hash, PoW, tautan `hashSebelumnya`, dan aturan transaksi, serta menunjuk **blok pertama yang rusak**. UI menyediakan fitur untuk sengaja merusak blok sebagai uji keamanan.
-- Rantai disimpan di `rantai.json` pada folder data aplikasi.
+- Rantai disimpan di `rantai.json` pada folder data aplikasi (berkas dibuat saat blok pertama ditulis).
+- **Log audit** (`chain/audit.js`): kejadian penting dicatat sebagai blok `{ tipe: 'AUDIT', aksi, pelaku, rincian }` pada rantai yang sama. Contoh aksi: `LOGIN_BERHASIL`, `LOGIN_GAGAL`, `WAJAH_GAGAL`, `AKUN_DIBUAT`, `LOGOUT`, `DONGLE_DICABUT`, `PESAN_DIKIRIM`, `PESAN_DITERIMA`, `BERKAS_DIENKRIPSI`, `GAMBAR_DISISIPI`, `PESAN_PENTING_DIBUKA`. **Isi pesan, isi berkas, dan password tidak pernah dicatat.**
+- Penambahan blok berjalan lewat **antrean** (kejadian bersamaan tidak saling menimpa). Bila rantai sedang rusak, blok baru ditolak sampai di-**Reset**; kegagalan mencatat tidak pernah mengganggu fitur yang dipakai.
+- Halaman **Log Audit** menampilkan semua catatan, status validasi, dan tombol Rusakkan blok (demo) serta Reset.
+- **Batasan:** rantai disimpan lokal tanpa konsensus. Pemegang akses penuh ke laptop dapat menulis ulang seluruh rantai; yang terdeteksi adalah perubahan sebagian. Mitigasi yang dirancang tetapi belum dibuat: mencantumkan hash blok terakhir di amplop `.enc` ke laptop lawan.
 
 ### 5.8 Hash password — `auth/password.js`
 
@@ -241,8 +266,9 @@ PBKDF2-HMAC-SHA256, 210.000 iterasi, salt acak 16 byte, pembandingan `timingSafe
 ### 5.10 Pengenalan wajah — `security/wajah.js`, `renderer/wajah*.js`
 
 - Pustaka **@vladmandic/human** di renderer menghasilkan **embedding 1024 angka**; model dilayani lewat protokol khusus `svmodel://`.
-- Pendaftaran: 3–5 pengambilan yang harus saling mirip, lalu **dirata-ratakan** menjadi templat.
-- Pencocokan: jarak kuadrat → skor kemiripan 0–1, **ambang 0,6**, maksimal 5 kegagalan.
+- **Pendaftaran saat membuat akun:** panel kamera muncul setelah username, password, dan flashdisk diterima. Ambil 3 pengambilan yang saling mirip, dirata-ratakan menjadi templat. Tombol **Uji skor** menampilkan skor terhadap ambang untuk kalibrasi, **daftar ulang** bila perlu, lalu **Selesai dan masuk**. **Batal** menghapus akun yang baru dibuat.
+- Akun yang belum punya templat (misalnya data lama) diminta mendaftarkan wajah pada login berikutnya, sehingga semua akun wajib punya wajah.
+- Pencocokan saat login: jarak kuadrat → skor kemiripan 0–1, **ambang 0,6**, maksimal 5 kegagalan.
 - Templat disimpan **terenkripsi AES-256-GCM** dengan subkunci `wajah` dari kunci master.
 
 ---
@@ -279,17 +305,19 @@ Karena salt berasal dari dua username yang diurutkan, **kedua laptop menurunkan 
 | `mac` | stempel keaslian pesan |
 | `kcv` | kode cek kunci 6 digit hex untuk dibandingkan di kedua laptop |
 | `vigenere` | 12 huruf A–Z |
-| `sdes` | 10 bit |
+| `des` | 64 bit (16 karakter heksadesimal) |
 | `berkas` | passphrase pengganti untuk berkas `.enc` |
 | `gambar` | passphrase pengganti untuk steganografi |
 
 ### 7.2 Pesan teks (`.enc`)
 
+Pesan teks dan berkas sama-sama berekstensi `.enc`. Aplikasi membedakannya dari isi: pesan teks berupa JSON, berkas diawali penanda `SKRY1`. Bila salah memilih jenis, aplikasi menolak dengan petunjuk.
+
 ```json
 { "v": 1, "dari": "...", "ke": "...", "seq": 1, "waktu": 0, "id": "...", "token": "...", "mac": "..." }
 ```
 
-- `token` = hasil super enkripsi (Vigenère → S-DES CBC → Base64).
+- `token` = hasil super enkripsi (Vigenère → DES CBC → Base64).
 - `mac` = **HMAC-SHA256** atas semua bidang lain (*encrypt-then-MAC*). Algoritma klasik tidak mendeteksi perubahan data, jadi MAC inilah yang menolak pesan yang diubah atau yang memakai passphrase salah, **sebelum** dekripsi dijalankan.
 - `seq` harus lebih besar dari nomor terakhir yang diterima, sehingga **pesan lama atau yang diimpor ulang (replay) ditolak**.
 - Pemeriksaan tambahan: penerima (`ke`) dan pengirim (`dari`) harus sesuai percakapan.
@@ -363,21 +391,21 @@ Tanpa `--data-dir`, aplikasi memakai folder data bawaan Electron (`userData`).
 
 ## 10. Panduan Penggunaan
 
-1. **Buat akun**: colokkan **satu** flashdisk, isi username (3–30 karakter) dan password (8–100 karakter). Berkas `.sdk` ditulis ke flashdisk. **Jangan hilangkan flashdisk ini.**
-2. **Login**: flashdisk harus terpasang, lalu username + password. Bila wajah sudah didaftarkan, lanjut ke verifikasi kamera.
-3. **Daftarkan wajah** (opsional): menu *Face Recognition*, ambil 3–5 foto.
-4. Fitur setelah login:
+1. **Buat akun**: colokkan **satu** flashdisk, isi username (3–30 karakter) dan password (8–100 karakter). Berkas `.sdk` ditulis ke flashdisk. **Jangan hilangkan flashdisk ini.** Lanjut ke panel kamera: ambil 3 foto, cek **Uji skor**, lalu **Selesai dan masuk**. Tombol **Batal** membatalkan akun baru.
+2. **Login**: flashdisk harus terpasang, lalu username + password, lalu verifikasi wajah lewat kamera.
+3. Fitur setelah login:
 
 | Menu | Fungsi |
 |---|---|
-| Pesan | super enkripsi/dekripsi teks (Vigenère + S-DES) |
+| Pesan | super enkripsi/dekripsi teks (Vigenère + DES) |
 | File | enkripsi/dekripsi berkas ke `.enc` |
 | Gambar | sisipkan/ekstrak pesan rahasia di PNG |
 | Aset | blockchain: daftarkan, transfer, validasi, uji perusakan blok |
+| Log Audit | catatan kejadian aplikasi pada rantai blok, validasi, uji perusakan |
 | Chat | komunikasi dua laptop (lihat bagian 7) |
 | Arsip | simpan pesan penting terenkripsi di basis data |
-| Face Recognition | daftarkan/uji/hapus templat wajah |
 
+4. Beberapa akun boleh memakai flashdisk yang sama (username harus unik).
 5. **Mencabut flashdisk saat sesi berjalan** akan langsung mengunci aplikasi.
 
 ---
@@ -389,7 +417,7 @@ npm test            # sekali jalan (vitest run)
 npm run test:watch  # mode pantau
 ```
 
-Cakupan (`tests/`): `vigenere`, `sdes`, `superCipher`, `fileCipher`, `stegano`, `dbCipher`, `blockchain`, `auth`, `wajah`, `chat`, dan `wiring` (pengecekan penyambungan kanal IPC/preload).
+**121 tes dalam 12 berkas.** Cakupan (`tests/`): `vigenere`, `des` (termasuk vektor FIPS), `superCipher`, `fileCipher`, `stegano`, `dbCipher`, `blockchain`, `audit`, `auth`, `wajah`, `chat`, dan `wiring` (pengecekan penyambungan kanal IPC/preload).
 
 ---
 
@@ -413,11 +441,12 @@ node tools/ws-client.js ws://localhost:8765 nama
 
 ## 13. Catatan Keamanan dan Batasan
 
-- **Vigenère dan S-DES adalah algoritma klasik/edukasi** dan tidak aman untuk pemakaian nyata (S-DES: kunci hanya 10 bit, blok 1 byte, IV 1 byte). Keamanan pesan teks di chat sebenarnya ditopang oleh **HMAC-SHA256 (encrypt-then-MAC)**.
+- **Vigenère dan DES sudah usang** untuk pemakaian nyata (DES: kunci efektif 56 bit, blok 64 bit). Dipakai karena syarat tugas. Keamanan pesan teks di chat sebenarnya ditopang oleh **HMAC-SHA256 (encrypt-then-MAC)**.
 - Berkas, gambar, dan basis data memakai algoritma modern (AES-256-GCM, ChaCha20-Poly1305).
 - Kekuatan chat bergantung pada **kekuatan passphrase bersama** dan bagaimana passphrase itu dibagikan.
+- **Log audit disimpan lokal** tanpa konsensus: perubahan sebagian terdeteksi, tetapi penulisan ulang seluruh rantai oleh pemegang akses penuh tidak.
 - Deteksi dongle **khusus Windows**.
-- Pemantauan dongle dan verifikasi wajah berjalan di sisi aplikasi; wajah bukan pengganti kriptografi, hanya lapisan autentikasi tambahan. Tidak ada deteksi *liveness* (antispoof dimatikan).
+- Pemantauan dongle dan verifikasi wajah berjalan di sisi aplikasi; wajah bukan pengganti kriptografi, hanya lapisan autentikasi tambahan. Tidak ada deteksi *liveness* (antispoof dimatikan), jadi foto dapat berpotensi mengelabui; ambang 0,6 perlu dikalibrasi di laptop demo lewat Uji skor.
 - Folder data pengguna (`data/`, `*.db`, `*.sdk`, `.env`) sudah dikecualikan di `.gitignore`.
 
 ---
