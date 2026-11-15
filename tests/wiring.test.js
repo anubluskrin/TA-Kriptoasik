@@ -104,7 +104,7 @@ describe('app.js dijalankan dengan DOM tiruan', () => {
     expect(panggilan.some(([nama]) => nama === 'authStatus')).toBe(true);
     for (const id of ['login-tombol', 'btn-keluar', 'btn-ping', 'pesan-enkripsi', 'pesan-dekripsi', 'file-enkripsi',
       'file-dekripsi', 'gambar-sisipkan', 'gambar-ekstrak', 'aset-reset', 'arsip-simpan', 'arsip-buka',
-      'login-wajah-tombol', 'login-wajah-batal', 'wajah-kamera', 'wajah-daftar', 'wajah-uji', 'wajah-hapus']) {
+      'login-wajah-tombol', 'login-wajah-batal', 'login-wajah-uji', 'login-wajah-selesai']) {
       expect(pendengar[`${id}:click`], `tombol ${id} tidak punya pendengar klik`).toBeTruthy();
     }
   });

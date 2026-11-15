@@ -27,8 +27,8 @@ function daftarkan() {
 
     ipcMain.handle('auth:daftar', (event, username, password) =>
     jalankan(async () => {
-      await auth.daftar(username, password, { wajibDaftarWajah: true });
-      await auth.masuk(username, password);
+      await auth.daftar(username, password);
+      await auth.masuk(username, password, { akunBaru: true });
       if (!session.menungguDaftarWajah()) dongleMonitor.mulai(event.sender);
       return status();
     })

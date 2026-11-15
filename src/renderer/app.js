@@ -301,7 +301,7 @@ const elLoginUlang = document.getElementById('login-ulang');
 const elLoginBarisUlang = document.getElementById('login-baris-ulang');
 const elLoginTombol = document.getElementById('login-tombol');
 const elLoginGanti = document.getElementById('login-ganti');
-const elLoginAlih = document.querySelector('.login-alih');
+const elLoginAlih = document.getElementById('login-alih');
 const elLoginAlihTeks = document.getElementById('login-alih-teks');
 const elLoginStatus = document.getElementById('login-status');
 let modeDaftar = false;
@@ -330,7 +330,6 @@ function masukAplikasi(username) {
   tampilkanHalaman('beranda');
   muatAset();
   muatArsip();
-  muatStatusWajah();
   muatPercakapan();
 }
 

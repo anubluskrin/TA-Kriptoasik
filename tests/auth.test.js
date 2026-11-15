@@ -29,6 +29,12 @@ grup('auth, dongle, sesi, dan pesan penting (dengan flashdisk palsu)', () => {
     pesanPenting = require('../src/main/db/pesanPenting');
   });
 
+  // Akun tanpa wajah wajib mendaftarkan wajah dulu; di tes ini tahap itu dilewati agar sesi langsung penuh
+  async function masukPenuh(username, password) {
+    await auth.masuk(username, password);
+    if (session.menungguDaftarWajah()) session.selesaikanDaftarWajah();
+  }
+
   beforeEach(() => {
     folderKerja = fs.mkdtempSync(path.join(os.tmpdir(), 'sv-uji-'));
     flashA = fs.mkdirSync(path.join(folderKerja, 'flashA')) || path.join(folderKerja, 'flashA');
@@ -60,13 +66,13 @@ grup('auth, dongle, sesi, dan pesan penting (dengan flashdisk palsu)', () => {
     await expect(auth.daftar('hasan', PASSWORD)).rejects.toThrow(/Terdeteksi 2 flashdisk/);
   });
 
-  it('daftar menulis .svkey ke flashdisk dan menyimpan akun; akun kedua boleh, username kembar ditolak', async () => {
+  it('daftar menulis .svkey ke flashdisk dan menyimpan akun; pendaftaran lalu ditutup', async () => {
     await auth.daftar('hasan', PASSWORD);
     expect(auth.adaAkun()).toBe(true);
     const isi = JSON.parse(fs.readFileSync(path.join(flashA, '.svkey'), 'utf8'));
     expect(isi.versi).toBe(1);
     expect(isi.secret).toMatch(/^[0-9a-f]{64}$/);
-    await auth.daftar('lain', 'password-kuat-2'); // multi-akun: akun kedua boleh
+    await auth.daftar('lain', 'password-kuat-2');
     expect(jumlahAkun()).toBe(2);
     await expect(auth.daftar('lain', 'password-kuat-3')).rejects.toThrow(/Username sudah dipakai/);
   }, 20000);
@@ -80,7 +86,7 @@ grup('auth, dongle, sesi, dan pesan penting (dengan flashdisk palsu)', () => {
     db.buka(path.join(folderKerja, 'kedua.db'));
     await auth.daftar('budi', 'password-kuat-2');
     expect(fs.readFileSync(path.join(flashA, '.svkey'), 'utf8')).toBe(sebelum);
-    await auth.masuk('budi', 'password-kuat-2');
+    await masukPenuh('budi', 'password-kuat-2');
     expect(session.penggunaSaatIni().username).toBe('budi');
   }, 30000);
 
@@ -101,7 +107,7 @@ grup('auth, dongle, sesi, dan pesan penting (dengan flashdisk palsu)', () => {
 
   it('masuk dan keluar: sesi hidup lalu kunci dihapus', async () => {
     await auth.daftar('hasan', PASSWORD);
-    await auth.masuk('hasan', PASSWORD);
+    await masukPenuh('hasan', PASSWORD);
     expect(session.sudahMasuk()).toBe(true);
     expect(session.penggunaSaatIni().username).toBe('hasan');
     expect(session.subkunci('a').equals(session.subkunci('b'))).toBe(false);
@@ -139,13 +145,13 @@ grup('auth, dongle, sesi, dan pesan penting (dengan flashdisk palsu)', () => {
     expect(session.sudahMasuk()).toBe(false);
 
     db.ambil().prepare('UPDATE users SET kunci_sampai = 0').run(); // seolah 60 detik berlalu
-    await auth.masuk('hasan', PASSWORD);
+    await masukPenuh('hasan', PASSWORD);
     expect(session.sudahMasuk()).toBe(true);
   }, 30000);
 
   it('pesan penting: tersimpan terenkripsi, bisa dibuka, dan terlindungi dari kunci lain', async () => {
     await auth.daftar('hasan', PASSWORD);
-    await auth.masuk('hasan', PASSWORD);
+    await masukPenuh('hasan', PASSWORD);
     const user = session.penggunaSaatIni();
     const kunci = session.subkunci('db');
 
@@ -165,7 +171,7 @@ grup('auth, dongle, sesi, dan pesan penting (dengan flashdisk palsu)', () => {
 
   it('pesan penting yang diubah langsung di database ditolak', async () => {
     await auth.daftar('hasan', PASSWORD);
-    await auth.masuk('hasan', PASSWORD);
+    await masukPenuh('hasan', PASSWORD);
     const user = session.penggunaSaatIni();
     const kunci = session.subkunci('db');
     const id = pesanPenting.simpan(user.id, 'x', 'isi', kunci);

@@ -68,6 +68,7 @@ grup('wajah: pendaftaran dan verifikasi saat login', () => {
     session.akhiri();
     await auth.daftar('hasan', PASSWORD);
     await auth.masuk('hasan', PASSWORD);
+    session.selesaikanDaftarWajah(); // tahap wajah baru dilewati; tiap tes mendaftarkan wajahnya sendiri
   }, 20000);
 
   afterEach(() => {
@@ -141,18 +142,48 @@ grup('wajah: pendaftaran dan verifikasi saat login', () => {
     expect(() => wajah.verifikasi(ambilan(A, 7))).toThrow(/Tidak ada verifikasi wajah yang menunggu/);
   });
 
-  it('tanpa wajah terdaftar, login langsung penuh; setelah wajah dihapus, login kembali tanpa wajah', async () => {
+  it('akun tanpa wajah: login menunggu pendaftaran wajah, setelah wajah dihapus login menunggu lagi', async () => {
     session.akhiri();
     await auth.masuk('hasan', PASSWORD);
+    expect(session.menungguDaftarWajah()).toBe(true);
+    expect(session.sudahMasuk()).toBe(false); // fitur lain tertutup sampai wajah terdaftar
+    wajah.daftarAwal([ambilan(A, 1), ambilan(A, 2), ambilan(A, 3)]);
+    expect(wajah.selesaiDaftar().username).toBe('hasan');
     expect(session.sudahMasuk()).toBe(true);
 
-    daftarkanWajah();
     wajah.hapus();
     expect(wajah.terdaftar()).toBe(false);
     session.akhiri();
     await auth.masuk('hasan', PASSWORD);
-    expect(session.sudahMasuk()).toBe(true);
+    expect(session.menungguDaftarWajah()).toBe(true);
   }, 20000);
+
+  it('daftar wajah saat membuat akun: uji skor, daftar ulang, lalu selesai', async () => {
+    session.akhiri();
+    await auth.masuk('hasan', PASSWORD);
+    expect(() => wajah.ujiAwal(ambilan(A, 1))).toThrow(/belum didaftarkan/);
+    expect(() => wajah.selesaiDaftar()).toThrow(/Daftarkan wajah dulu/);
+    wajah.daftarAwal([ambilan(A, 1), ambilan(A, 2), ambilan(A, 3)]);
+    expect(wajah.ujiAwal(ambilan(A, 9)).skor).toBeGreaterThanOrEqual(wajah.AMBANG);
+    expect(wajah.ujiAwal(B).skor).toBeLessThan(wajah.AMBANG);
+    wajah.daftarAwal([ambilan(B, 1), ambilan(B, 2), ambilan(B, 3)]); // daftar ulang
+    expect(wajah.ujiAwal(B).skor).toBeGreaterThanOrEqual(wajah.AMBANG);
+    wajah.selesaiDaftar();
+    expect(session.sudahMasuk()).toBe(true);
+    expect(() => wajah.ujiAwal(B)).toThrow();
+  }, 20000);
+
+  it('batal saat mendaftar wajah: akun baru dihapus, akun lama hanya keluar', async () => {
+    session.akhiri();
+    await auth.masuk('hasan', PASSWORD); // akun ini bukan akun baru
+    auth.batalkanPendaftaran();
+    expect(db.ambil().prepare('SELECT COUNT(*) AS n FROM users').get().n).toBe(1);
+    expect(session.sudahMasuk()).toBe(false);
+
+    await auth.masuk('hasan', PASSWORD, { akunBaru: true });
+    auth.batalkanPendaftaran();
+    expect(db.ambil().prepare('SELECT COUNT(*) AS n FROM users').get().n).toBe(0);
+  }, 30000);
 
   it('templat wajah tidak bisa dibuka dengan kunci master yang berbeda', () => {
     daftarkanWajah();

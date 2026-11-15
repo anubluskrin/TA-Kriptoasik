@@ -54,6 +54,8 @@ async function daftar(username, password) {
   }
 }
 
+let idAkunBaru = null;
+
 async function masuk(username, password, opsi = {}) {
   periksaUsername(username);
   if (typeof password !== 'string' || password.length === 0 || password.length > 100) {
@@ -97,11 +99,13 @@ async function masuk(username, password, opsi = {}) {
   const kunciMaster = await turunkanKunci(gabungan, Buffer.from(user.kdf_salt, 'hex'));
 
   const punyaWajah = Boolean(user.wajah_embedding && user.wajah_embedding.length > 0);
+
   session.mulai(
     { id: user.id, username: user.username, dongle: { drive: dg.drive, serial: dg.serial } },
     kunciMaster,
-    { tertunda: punyaWajah, daftarWajah: Boolean(opsi.wajibDaftarWajah) && !punyaWajah }
+    { tertunda: punyaWajah, daftarWajah: !punyaWajah }
   );
+  idAkunBaru = opsi.akunBaru ? user.id : null;
 
   dg.secret.fill(0);
 }
@@ -114,7 +118,8 @@ function batalkanPendaftaran() {
   if (!session.menungguDaftarWajah()) throw new Error('Tidak ada pendaftaran yang menunggu');
   const id = session.penggunaMenungguDaftar().id;
   session.akhiri();
-  db.ambil().prepare('DELETE FROM users WHERE id = ?').run(id);
+  if (id === idAkunBaru) db.ambil().prepare('DELETE FROM users WHERE id = ?').run(id);
+  idAkunBaru = null;
 }
 
-module.exports = { adaAkun, daftar, masuk, keluar };
+module.exports = { adaAkun, daftar, masuk, keluar, batalkanPendaftaran };
