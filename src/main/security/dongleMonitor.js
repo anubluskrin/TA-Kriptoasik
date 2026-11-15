@@ -3,7 +3,7 @@ const session = require('../auth/session');
 const audit = require('../chain/audit');
 
 // Memantau dongle selama sesi berjalan.
-// Tiap detik: periksa berkas .svkey (cepat). Tiap 10 detik: periksa serial flashdisk.
+// Tiap detik: periksa berkas .sdk (cepat). Tiap 10 detik: periksa serial flashdisk.
 // Bila dongle hilang: hapus kunci dan sesi, lalu beri tahu tampilan agar kembali ke login.
 let timer = null;
 let hitungan = 0;

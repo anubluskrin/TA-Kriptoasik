@@ -9,7 +9,7 @@ function hitungSalt(userA, userB) {
   const urut = [userA, userB].sort();
   return crypto
     .createHash('sha256')
-    .update('securevault-percakapan-v1|' + urut.join('|'), 'utf8')
+    .update('sandikarya-percakapan-v1|' + urut.join('|'), 'utf8')
     .digest()
     .subarray(0, 16);
 }

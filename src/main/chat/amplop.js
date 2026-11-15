@@ -1,7 +1,7 @@
 const crypto = require('node:crypto');
 const superCipher = require('../crypto/superCipher');
 
-// Amplop pesan (isi berkas .svmsg):
+// Amplop pesan (isi berkas .enc):
 //   { v, dari, ke, seq, waktu, id, token, mac }
 // token = hasil super enkripsi (Vigenere lalu DES CBC lalu Base64)
 // mac   = HMAC-SHA256 atas seluruh bidang lain (encrypt-then-MAC), memakai kunci mac percakapan.
@@ -42,7 +42,7 @@ function verifikasi(amplop, { saya, kontak, kunci, seqTerakhir }) {
     Number.isInteger(amplop.seq) && Number.isFinite(amplop.waktu) &&
     typeof amplop.id === 'string' && typeof amplop.token === 'string' &&
     typeof amplop.mac === 'string';
-  if (!bentukBenar) throw new Error('Berkas bukan pesan SecureVault yang valid');
+  if (!bentukBenar) throw new Error('Berkas bukan pesan Sandikarya yang valid');
   if (amplop.token.length > MAKS_TOKEN) throw new Error('Pesan terlalu besar');
 
   if (amplop.ke !== saya) throw new Error(`Pesan ini ditujukan untuk ${amplop.ke}, bukan untuk ${saya}`);

@@ -66,10 +66,10 @@ grup('auth, dongle, sesi, dan pesan penting (dengan flashdisk palsu)', () => {
     await expect(auth.daftar('hasan', PASSWORD)).rejects.toThrow(/Terdeteksi 2 flashdisk/);
   });
 
-  it('daftar menulis .svkey ke flashdisk dan menyimpan akun; pendaftaran lalu ditutup', async () => {
+  it('daftar menulis .sdk ke flashdisk dan menyimpan akun; pendaftaran lalu ditutup', async () => {
     await auth.daftar('hasan', PASSWORD);
     expect(auth.adaAkun()).toBe(true);
-    const isi = JSON.parse(fs.readFileSync(path.join(flashA, '.svkey'), 'utf8'));
+    const isi = JSON.parse(fs.readFileSync(path.join(flashA, '.sdk'), 'utf8'));
     expect(isi.versi).toBe(1);
     expect(isi.secret).toMatch(/^[0-9a-f]{64}$/);
     await auth.daftar('lain', 'password-kuat-2');
@@ -77,20 +77,20 @@ grup('auth, dongle, sesi, dan pesan penting (dengan flashdisk palsu)', () => {
     await expect(auth.daftar('lain', 'password-kuat-3')).rejects.toThrow(/Username sudah dipakai/);
   }, 20000);
 
-  it('flashdisk yang sudah berisi .svkey dipakai ulang, tidak ditimpa (akun kedua di folder data lain)', async () => {
+  it('flashdisk yang sudah berisi .sdk dipakai ulang, tidak ditimpa (akun kedua di folder data lain)', async () => {
     await auth.daftar('hasan', PASSWORD);
-    const sebelum = fs.readFileSync(path.join(flashA, '.svkey'), 'utf8');
+    const sebelum = fs.readFileSync(path.join(flashA, '.sdk'), 'utf8');
 
     // folder data kedua = basis data baru, flashdisk yang sama
     db.tutup();
     db.buka(path.join(folderKerja, 'kedua.db'));
     await auth.daftar('budi', 'password-kuat-2');
-    expect(fs.readFileSync(path.join(flashA, '.svkey'), 'utf8')).toBe(sebelum);
+    expect(fs.readFileSync(path.join(flashA, '.sdk'), 'utf8')).toBe(sebelum);
     await masukPenuh('budi', 'password-kuat-2');
     expect(session.penggunaSaatIni().username).toBe('budi');
   }, 30000);
 
-  it('kegagalan menulis .svkey membatalkan akun (tidak ada akun tanpa dongle)', async () => {
+  it('kegagalan menulis .sdk membatalkan akun (tidak ada akun tanpa dongle)', async () => {
     drives = [{ drive: path.join(folderKerja, 'tidak-ada'), serial: 'SERIAL-AAA', model: 'Palsu' }];
     await expect(auth.daftar('hasan', PASSWORD)).rejects.toThrow(/Gagal menulis kunci ke flashdisk/);
     expect(jumlahAkun()).toBe(0);
@@ -123,9 +123,9 @@ grup('auth, dongle, sesi, dan pesan penting (dengan flashdisk palsu)', () => {
     expect(db.ambil().prepare('SELECT gagal FROM users').get().gagal).toBe(0);
   }, 20000);
 
-  it('berkas .svkey yang disalin ke flashdisk lain ditolak (serial berbeda)', async () => {
+  it('berkas .sdk yang disalin ke flashdisk lain ditolak (serial berbeda)', async () => {
     await auth.daftar('hasan', PASSWORD);
-    fs.copyFileSync(path.join(flashA, '.svkey'), path.join(flashB, '.svkey'));
+    fs.copyFileSync(path.join(flashA, '.sdk'), path.join(flashB, '.sdk'));
     drives = [driveB()];
     await expect(auth.masuk('hasan', PASSWORD)).rejects.toThrow(/bukan dongle akun ini/);
   }, 20000);

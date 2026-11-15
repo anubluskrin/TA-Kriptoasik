@@ -50,8 +50,8 @@ async function kirimBerkas(event, idPercakapan) {
 
   const simpan = await dialog.showSaveDialog(win, {
     title: 'Simpan berkas terenkripsi untuk dikirim',
-    defaultPath: `${nama}.svlt`,
-    filters: [{ name: 'Berkas SecureVault', extensions: ['svlt'] }],
+    defaultPath: `${nama}.enc`,
+    filters: [{ name: 'Berkas Sandikarya', extensions: ['enc'] }],
   });
   if (simpan.canceled) return { dibatalkan: true };
 
@@ -64,8 +64,8 @@ async function terimaBerkas(event, idPercakapan) {
   const { p, kDb, kunci } = siapkan(idPercakapan);
   const win = BrowserWindow.fromWebContents(event.sender);
 
-  const asal = await pilihBerkas(win, 'Pilih berkas .svlt dari kontak', [
-    { name: 'Berkas SecureVault', extensions: ['svlt'] },
+  const asal = await pilihBerkas(win, 'Pilih berkas .enc dari kontak', [
+    { name: 'Berkas Sandikarya', extensions: ['enc'] },
   ]);
   if (!asal) return { dibatalkan: true };
   const info = await fs.stat(asal);

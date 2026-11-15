@@ -4,12 +4,12 @@ const path = require('node:path');
 const { execFile } = require('node:child_process');
 
 // Dongle = flashdisk USB. Dua hal diperiksa:
-//   1. Berkas .svkey di akar flashdisk berisi `secret` (32 byte acak)
+//   1. Berkas .sdk di akar flashdisk berisi `secret` (32 byte acak)
 //   2. Basis data menyimpan dongle_tag = HMAC-SHA256(kunci = secret, pesan = serial flashdisk)
-// Berkas .svkey yang disalin ke flashdisk lain ditolak karena serialnya berbeda.
+// Berkas .sdk yang disalin ke flashdisk lain ditolak karena serialnya berbeda.
 // Secret juga ikut menurunkan kunci master, jadi data lokal tidak terbuka tanpa dongle.
 
-const NAMA_BERKAS = '.svkey';
+const NAMA_BERKAS = '.sdk';
 
 const SKRIP_POWERSHELL = `
 $result = @(
@@ -88,7 +88,7 @@ async function status() {
 
 /// Menyiapkan data dongle TANPA menulis apa pun ke flashdisk (dipakai saat membuat akun).
 // Syarat: tepat satu flashdisk USB terpasang.
-// Bila flashdisk sudah berisi .svkey yang valid, rahasianya dipakai ulang (tidak ditimpa),
+// Bila flashdisk sudah berisi .sdk yang valid, rahasianya dipakai ulang (tidak ditimpa),
 // supaya akun lain yang sudah memakai flashdisk ini tidak terkunci.
 async function siapkan() {
   const daftar = await penyedia.daftarDrive();
@@ -105,7 +105,7 @@ async function siapkan() {
   return { secret, tag: hitungTag(secret, serial), drive, serial, model, sudahAda };
 }
 
-// Menulis berkas .svkey ke flashdisk bila belum ada. Dipanggil SETELAH akun tersimpan di basis data,
+// Menulis berkas .sdk ke flashdisk bila belum ada. Dipanggil SETELAH akun tersimpan di basis data,
 // supaya kegagalan menyimpan akun tidak meninggalkan flashdisk berisi kunci tanpa akun.
 function tulis(dg) {
   if (dg.sudahAda) return;

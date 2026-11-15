@@ -3,6 +3,6 @@ data/
 dist/
 out/
 *.db
-*.svkey
-.svkey
+*.sdk
+.sdk
 .env

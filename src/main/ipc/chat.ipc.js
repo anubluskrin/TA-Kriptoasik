@@ -50,8 +50,8 @@ async function kirimPesan(event, idPercakapan, teks, penting) {
   const win = BrowserWindow.fromWebContents(event.sender);
   const simpan = await dialog.showSaveDialog(win, {
     title: 'Simpan berkas pesan',
-    defaultPath: `pesan-${saya.username}-ke-${p.kontak}-${seq}.svmsg`,
-    filters: [{ name: 'Pesan SecureVault', extensions: ['svmsg'] }],
+    defaultPath: `pesan-${saya.username}-ke-${p.kontak}-${seq}.enc`,
+    filters: [{ name: 'Pesan Sandikarya', extensions: ['enc'] }],
   });
   if (simpan.canceled) return { dibatalkan: true };
 
@@ -68,7 +68,7 @@ async function imporPesan(event) {
   const pilih = await dialog.showOpenDialog(win, {
     title: 'Pilih berkas pesan',
     properties: ['openFile', 'multiSelections'],
-    filters: [{ name: 'Pesan SecureVault', extensions: ['svmsg'] }],
+    filters: [{ name: 'Pesan Sandikarya', extensions: ['enc'] }],
   });
   if (pilih.canceled) return { dibatalkan: true };
 
@@ -81,7 +81,7 @@ async function imporPesan(event) {
       if (info.size > MAKS_BERKAS) throw new Error('berkas terlalu besar');
       daftar.push({ nama, isi: JSON.parse(await fs.readFile(jalur, 'utf8')) });
     } catch (err) {
-      const alasan = err instanceof SyntaxError ? 'bukan berkas pesan yang valid' : err.message;
+      const alasan = err instanceof SyntaxError ? 'bukan berkas pesan yang valid (bila ini berkas terenkripsi, pakai Terima berkas)' : err.message;
       ringkasan.push(`${nama}: ditolak, ${alasan}`);
     }
   }
@@ -92,7 +92,7 @@ async function imporPesan(event) {
   let diterima = 0;
   for (const { nama, isi: a } of daftar) {
     try {
-      if (!a || typeof a.dari !== 'string') throw new Error('berkas bukan pesan SecureVault yang valid');
+      if (!a || typeof a.dari !== 'string') throw new Error('berkas bukan pesan Sandikarya yang valid');
       const id = percakapan.cariKontak(saya.id, a.dari);
       if (!id) throw new Error(`belum ada percakapan dengan ${a.dari}`);
 

@@ -2,7 +2,7 @@ const { enkripsiBerkas, dekripsiBerkas } = require('../src/main/crypto/fileCiphe
 
 const PASS = 'passphrase-uji';
 
-describe('fileCipher (.svlt, AES-256-GCM)', () => {
+describe('fileCipher (.enc, AES-256-GCM)', () => {
   it('round-trip untuk berkas kosong, kecil, dan 5000 byte', async () => {
     for (const ukuran of [0, 1, 5000]) {
       const isi = Buffer.alloc(ukuran, 0xab);
@@ -18,10 +18,10 @@ describe('fileCipher (.svlt, AES-256-GCM)', () => {
     expect((await dekripsiBerkas(enc, PASS)).namaAsli).toBe('laporan akhir \u{1F600}.pdf');
   });
 
-  it('format: diawali SVLT1 dan panjangnya sesuai', async () => {
+  it('format: diawali SKRY1 dan panjangnya sesuai', async () => {
     const isi = Buffer.alloc(100, 1);
     const enc = await enkripsiBerkas('a.txt', isi, PASS);
-    expect(enc.subarray(0, 5).toString('utf8')).toBe('SVLT1');
+    expect(enc.subarray(0, 5).toString('utf8')).toBe('SKRY1');
     // magic 5 + salt 16 + iv 12 + tag 16 + panjang nama 2 + nama 5 + isi 100
     expect(enc.length).toBe(5 + 16 + 12 + 16 + 2 + 5 + 100);
   });
@@ -58,12 +58,12 @@ describe('fileCipher (.svlt, AES-256-GCM)', () => {
     await expect(dekripsiBerkas(enc.subarray(0, enc.length - 10), PASS)).rejects.toThrow();
   });
 
-  it('menolak berkas yang bukan format .svlt', async () => {
-    await expect(dekripsiBerkas(Buffer.from('bukan berkas svlt sama sekali, hanya teks biasa'), PASS)).rejects.toThrow(
-      /bukan format .svlt/
+  it('menolak berkas yang bukan format .enc', async () => {
+    await expect(dekripsiBerkas(Buffer.from('bukan berkas enc sama sekali, hanya teks biasa'), PASS)).rejects.toThrow(
+      /bukan format .enc/
     );
-    await expect(dekripsiBerkas(Buffer.alloc(3), PASS)).rejects.toThrow(/bukan format .svlt/);
-    await expect(dekripsiBerkas('teks', PASS)).rejects.toThrow(/bukan format .svlt/);
+    await expect(dekripsiBerkas(Buffer.alloc(3), PASS)).rejects.toThrow(/bukan format .enc/);
+    await expect(dekripsiBerkas('teks', PASS)).rejects.toThrow(/bukan format .enc/);
   });
 
   it('menolak masukan tidak valid', async () => {

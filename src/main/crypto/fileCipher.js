@@ -1,12 +1,12 @@
 const crypto = require('node:crypto');
 const { turunkanKunci } = require('./keys');
 
-// Format berkas .svlt:
-//   MAGIC "SVLT1" (5) | salt (16) | iv (12) | tag (16) | ciphertext
+// Format berkas .enc:
+//   MAGIC "SKRY1" (5) | salt (16) | iv (12) | tag (16) | ciphertext
 // Isi yang dienkripsi: panjangNama (2 byte) | nama berkas asli (UTF-8) | isi berkas
 // MAGIC, salt, dan iv ikut diautentikasi (AAD), jadi header yang diubah akan ditolak.
 
-const MAGIC = Buffer.from('SVLT1', 'utf8');
+const MAGIC = Buffer.from('SKRY1', 'utf8');
 const PANJANG_SALT = 16;
 const PANJANG_IV = 12;
 const PANJANG_TAG = 16;
@@ -38,10 +38,10 @@ async function enkripsiBerkas(namaAsli, isi, passphrase) {
 
 async function dekripsiBerkas(data, passphrase) {
   if (!Buffer.isBuffer(data) || data.length < PANJANG_HEADER + 2) {
-    throw new Error('Berkas bukan format .svlt yang valid');
+    throw new Error('Berkas bukan format .enc berkas yang valid (bila ini pesan teks, pakai Impor berkas pesan)');
   }
   if (!data.subarray(0, MAGIC.length).equals(MAGIC)) {
-    throw new Error('Berkas bukan format .svlt yang valid');
+    throw new Error('Berkas bukan format .enc yang valid (bila ini pesan teks, pakai Impor berkas pesan)');
   }
 
   let pos = MAGIC.length;

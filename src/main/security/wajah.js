@@ -10,7 +10,7 @@ const AMBANG = 0.6; // kemiripan minimal (0 sampai 1). Naikkan bila wajah orang 
 const MAKS_GAGAL = 5;
 const JUMLAH_FOTO_MIN = 3;
 const JUMLAH_FOTO_MAKS = 5;
-const AAD = Buffer.from('securevault-wajah-v1');
+const AAD = Buffer.from('sandikarya-wajah-v1');
 
 // Rumus yang sama dengan Human.match.similarity (sudah dicocokkan angkanya)
 function jarak(a, b) {

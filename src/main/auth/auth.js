@@ -25,7 +25,7 @@ function periksaPassword(password) {
 }
 
 // Beberapa akun boleh dibuat di satu aplikasi, dan boleh memakai flashdisk yang sama
-// (rahasia .svkey yang sudah ada dipakai ulang oleh dongle.siapkan).
+// (rahasia .sdk yang sudah ada dipakai ulang oleh dongle.siapkan).
 async function daftar(username, password) {
   periksaUsername(username);
   periksaPassword(password);
@@ -33,7 +33,7 @@ async function daftar(username, password) {
     throw new Error('Username sudah dipakai');
   }
 
-  // Urutan penting: siapkan dongle (belum menulis) -> simpan akun -> tulis .svkey.
+  // Urutan penting: siapkan dongle (belum menulis) -> simpan akun -> tulis .sdk.
   // Bila penulisan gagal, akun dibatalkan sehingga tidak ada akun tanpa dongle.
   const dg = await dongle.siapkan();
   const h = await buatHash(password);

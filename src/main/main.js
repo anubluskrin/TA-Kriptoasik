@@ -20,7 +20,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1000,
     height: 700,
-    title: 'SecureVault',
+    title: 'Sandikarya',
     autoHideMenuBar: true, // menu bawaan Electron tersembunyi (tekan Alt untuk memunculkannya)
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
@@ -37,7 +37,7 @@ app.whenReady().then(() => {
     
   // Daftarkan semua kanal IPC sebelum jendela dibuat
     // Buka basis data lalu daftarkan semua kanal IPC sebelum jendela dibuat
-  db.buka(path.join(app.getPath('userData'), 'securevault.db'));
+  db.buka(path.join(app.getPath('userData'), 'sandikarya.db'));
   daftarkanSemuaIpc();
 
   // Hanya izinkan akses kamera/mikrofon (tipe 'media'), tolak izin lain

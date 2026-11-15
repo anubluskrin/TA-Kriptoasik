@@ -88,7 +88,7 @@ describe('amplop (encrypt-then-MAC)', () => {
   it('berkas yang bentuknya salah ditolak dengan galat yang jelas, bukan crash', () => {
     const a = buat();
     for (const rusak of [null, 'teks', 42, {}, { ...a, v: 2 }, { ...a, seq: 1.5 }, { ...a, token: 7 }]) {
-      expect(() => periksa(rusak)).toThrow(/bukan pesan SecureVault yang valid/);
+      expect(() => periksa(rusak)).toThrow(/bukan pesan Sandikarya yang valid/);
     }
     expect(() => periksa({ ...a, mac: 'bukan-hex' })).toThrow(/Stempel keaslian salah/);
     expect(() => periksa({ ...a, token: 'A'.repeat(60001) })).toThrow(/terlalu besar/);

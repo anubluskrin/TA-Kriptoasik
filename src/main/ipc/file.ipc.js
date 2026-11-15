@@ -38,8 +38,8 @@ async function enkripsiDariDialog(event, passphrase) {
 
   const simpan = await dialog.showSaveDialog(win, {
     title: 'Simpan berkas terenkripsi',
-    defaultPath: nama + '.svlt',
-    filters: [{ name: 'Berkas SecureVault', extensions: ['svlt'] }],
+    defaultPath: nama + '.enc',
+    filters: [{ name: 'Berkas Sandikarya', extensions: ['enc'] }],
   });
   if (simpan.canceled) return { dibatalkan: true };
 
@@ -50,7 +50,7 @@ async function enkripsiDariDialog(event, passphrase) {
       ['Ukuran asal (byte)', String(isi.length)],
       ['Algoritma', 'AES-256-GCM'],
       ['Turunan kunci', 'PBKDF2-HMAC-SHA256, 200000 iterasi'],
-      ['Ukuran .svlt (byte)', String(hasil.length)],
+      ['Ukuran .enc (byte)', String(hasil.length)],
       ['Disimpan di', simpan.filePath],
     ],
   };
@@ -61,9 +61,9 @@ async function dekripsiDariDialog(event, passphrase) {
   const win = BrowserWindow.fromWebContents(event.sender);
 
   const pilih = await dialog.showOpenDialog(win, {
-    title: 'Pilih berkas .svlt',
+    title: 'Pilih berkas .enc',
     properties: ['openFile'],
-    filters: [{ name: 'Berkas SecureVault', extensions: ['svlt'] }],
+    filters: [{ name: 'Berkas Sandikarya', extensions: ['enc'] }],
   });
   if (pilih.canceled) return { dibatalkan: true };
 
@@ -83,7 +83,7 @@ async function dekripsiDariDialog(event, passphrase) {
   await fs.writeFile(simpan.filePath, isi);
   return {
     rincian: [
-      ['Berkas .svlt', path.basename(asal)],
+      ['Berkas .enc', path.basename(asal)],
       ['Nama berkas asli', namaAsli],
       ['Ukuran hasil (byte)', String(isi.length)],
       ['Disimpan di', simpan.filePath],

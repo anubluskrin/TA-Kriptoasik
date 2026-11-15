@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' svmodel:; img-src 'self' data: blob:; media-src 'self' blob:" />
-  <title>SecureVault</title>
+  <title>Sandikarya</title>
   <link rel="stylesheet" href="styles/app.css" />
 </head>
 <body class="terkunci">
@@ -50,7 +50,7 @@
   </section>
 
   <aside class="sidebar">
-    <div class="brand">SecureVault</div>
+    <div class="brand">Sandikarya</div>
     <nav>
       <button class="menu-item active" data-page="beranda">Beranda</button>
       <button class="menu-item" data-page="pesan">Pesan Teks</button>
@@ -111,14 +111,14 @@
         <!-- File -->
     <section id="page-file" class="page">
       <h1>File</h1>
-      <p>Enkripsi berkas apa saja dengan AES-256-GCM. Hasilnya berkas berekstensi .svlt. Berkas yang diubah atau passphrase yang salah akan ditolak.</p>
+      <p>Enkripsi berkas apa saja dengan AES-256-GCM. Hasilnya berkas berekstensi .enc. Berkas yang diubah atau passphrase yang salah akan ditolak.</p>
 
       <label for="file-passphrase">Passphrase (minimal 8 karakter)</label>
       <input id="file-passphrase" type="password" autocomplete="off" />
 
       <div class="baris-tombol">
         <button id="file-enkripsi" class="aksi">Pilih berkas lalu enkripsi</button>
-        <button id="file-dekripsi" class="aksi sekunder">Pilih berkas .svlt lalu dekripsi</button>
+        <button id="file-dekripsi" class="aksi sekunder">Pilih berkas .enc lalu dekripsi</button>
       </div>
 
       <p id="file-status" class="status"></p>
@@ -230,7 +230,7 @@
         <!-- Percakapan -->
     <section id="page-chat" class="page">
       <h1>Percakapan</h1>
-      <p>Kirim pesan ke pengguna di laptop lain. Kedua pihak menyepakati satu passphrase di luar aplikasi. Pesan dikirim sebagai berkas .svmsg yang dipindahkan secara manual.</p>
+      <p>Kirim pesan ke pengguna di laptop lain. Kedua pihak menyepakati satu passphrase di luar aplikasi. Pesan dikirim sebagai berkas .enc yang dipindahkan secara manual.</p>
 
       <h2>Buat percakapan baru</h2>
       <label for="chat-kontak">Username kontak (akun di laptop lawan bicara)</label>
@@ -250,16 +250,16 @@
       <textarea id="chat-teks" rows="4"></textarea>
       <label class="baris-centang"><input id="chat-penting" type="checkbox" /> Tandai sebagai penting</label>
       <div class="baris-tombol">
-        <button id="chat-kirim" class="aksi">Buat berkas pesan (.svmsg)</button>
-        <button id="chat-impor" class="aksi sekunder">Impor berkas pesan (.svmsg)</button>
+        <button id="chat-kirim" class="aksi">Buat berkas pesan (.enc)</button>
+        <button id="chat-impor" class="aksi sekunder">Impor berkas pesan (.enc)</button>
       </div>
       <p id="chat-status" class="status"></p>
 
       <h2>Berkas dan gambar untuk kontak</h2>
       <p>Memakai kunci percakapan yang dipilih di atas, tanpa passphrase tambahan.</p>
       <div class="baris-tombol">
-        <button id="chat-kirim-berkas" class="aksi">Kirim berkas (.svlt)</button>
-        <button id="chat-terima-berkas" class="aksi sekunder">Terima berkas (.svlt)</button>
+        <button id="chat-kirim-berkas" class="aksi">Kirim berkas (.enc)</button>
+        <button id="chat-terima-berkas" class="aksi sekunder">Terima berkas (.enc)</button>
       </div>
       <label for="chat-gambar-pesan">Pesan rahasia untuk disisipkan ke gambar</label>
       <textarea id="chat-gambar-pesan" rows="2"></textarea>

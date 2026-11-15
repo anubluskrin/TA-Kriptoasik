@@ -1,7 +1,7 @@
 {
   "name": "ta-kriptoasik",
   "version": "1.0.0",
-  "description": "Aplikasi desktop kriptografi untuk Tugas Akhir Kriptografi. Satu aplikasi yang menggabungkan autentikasi berlapis (dongle flashdisk, password, biometrik wajah), super enkripsi teks (Vigenère + S-DES), enkripsi file, enkripsi basis data, steganografi gambar, blockchain sederhana, dan **komunikasi dua arah antar dua laptop**.",
+  "description": "Aplikasi desktop kriptografi untuk Tugas Akhir Kriptografi. Satu aplikasi yang menggabungkan autentikasi berlapis (dongle flashdisk, password, biometrik wajah), super enkripsi teks (Vigenère + DES), enkripsi file, enkripsi basis data, steganografi gambar, blockchain sederhana, dan **komunikasi dua arah antar dua laptop**.",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",

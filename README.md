@@ -1,10 +1,10 @@
-# SecureVault (TA-Kriptoasik)
+#  (TA-Kriptoasik)
 
 Aplikasi desktop kriptografi untuk Tugas Akhir Kriptografi, dibangun dengan **JavaScript + Electron**. Satu aplikasi yang menggabungkan:
 
 - **Autentikasi berlapis**: dongle flashdisk USB + password + biometrik wajah
 - **Super enkripsi teks**: Vigenère (mod 26) lalu S-DES mode CBC
-- **Enkripsi file**: AES-256-GCM (format `.svlt`)
+- **Enkripsi file**: AES-256-GCM (format `.enc`)
 - **Enkripsi basis data**: ChaCha20-Poly1305
 - **Steganografi gambar**: LSB acak pada PNG, isi pesan dienkripsi AES-256-GCM
 - **Blockchain sederhana**: pencatatan kepemilikan aset dengan Proof of Work
@@ -41,7 +41,7 @@ Aplikasi desktop kriptografi untuk Tugas Akhir Kriptografi, dibangun dengan **Ja
 | Kesepakatan kunci antar laptop | **Passphrase bersama** (disepakati di luar aplikasi), karena algoritma klasik tidak asimetris |
 | Autentikasi | 3 faktor: dongle USB, password, wajah (wajah opsional per akun, wajib bila sudah didaftarkan) |
 | Penyimpanan | SQLite bawaan Node (`node:sqlite`), seluruh data sensitif terenkripsi |
-| Transport antar laptop | **Berkas** (`.svmsg`, `.svlt`, `.png`) yang dipindahkan secara manual (flashdisk, email, dsb.) |
+| Transport antar laptop | **Berkas** (`.enc`, `.enc`, `.png`) yang dipindahkan secara manual (flashdisk, email, dsb.) |
 
 Pemisahan hak akses di Electron: proses utama (`main`) memegang semua kunci dan operasi kripto; tampilan (`renderer`) berjalan dengan `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`, dan hanya bisa memanggil fungsi yang diekspos `preload.js` lewat `window.api`.
 
@@ -69,7 +69,7 @@ flowchart LR
   end
   UI --> API --> GATE --> IPC
   IPC --> AUTH & SEC & CRY & CHAIN & CHAT & DB
-  USB[("Flashdisk USB\n.svkey")] --> SEC
+  USB[("Flashdisk USB\n.sdk")] --> SEC
   CAM[("Kamera")] --> UI
 ```
 
@@ -93,7 +93,7 @@ TA-Kriptoasik/
 │   │   │   ├── session.js      # sesi di memori, kunci master, subkunci HMAC
 │   │   │   └── password.js     # hash password PBKDF2
 │   │   ├── security/
-│   │   │   ├── dongle.js        # deteksi flashdisk (PowerShell), .svkey, tag HMAC
+│   │   │   ├── dongle.js        # deteksi flashdisk (PowerShell), .sdk, tag HMAC
 │   │   │   ├── dongleMonitor.js # pemantau pencabutan dongle
 │   │   │   ├── wajah.js         # templat wajah terenkripsi, pencocokan embedding
 │   │   │   └── protokolModel.js # protokol svmodel:// untuk model Human
@@ -101,7 +101,7 @@ TA-Kriptoasik/
 │   │   │   ├── vigenere.js     # Vigenère mod 26
 │   │   │   ├── sdes.js         # S-DES + mode CBC
 │   │   │   ├── superCipher.js  # Vigenère -> S-DES CBC -> Base64
-│   │   │   ├── fileCipher.js   # AES-256-GCM, format .svlt
+│   │   │   ├── fileCipher.js   # AES-256-GCM, format .enc
 │   │   │   ├── stegano.js      # LSB acak pada PNG
 │   │   │   └── keys.js         # PBKDF2-HMAC-SHA256 (200.000 iterasi)
 │   │   ├── chain/
@@ -110,7 +110,7 @@ TA-Kriptoasik/
 │   │   │   └── pow.worker.js   # pencarian nonce
 │   │   ├── chat/
 │   │   │   ├── kunciPercakapan.js # kunci percakapan dari passphrase bersama
-│   │   │   ├── amplop.js          # amplop pesan .svmsg + HMAC
+│   │   │   ├── amplop.js          # amplop pesan .enc + HMAC
 │   │   │   └── media.js           # pembungkus berkas/gambar untuk kontak
 │   │   ├── db/
 │   │   │   ├── db.js           # skema SQLite
@@ -148,14 +148,14 @@ flowchart TD
   H --> M[Pemantau dongle berjalan]
 ```
 
-Faktor kegagalan dongle tidak dihitung sebagai salah password. Saat sesi berjalan, `dongleMonitor` memeriksa berkas `.svkey` **tiap 1 detik** dan serial flashdisk **tiap 10 detik**. Bila dongle dicabut, kunci dan sesi dihapus dari memori dan tampilan kembali ke layar login.
+Faktor kegagalan dongle tidak dihitung sebagai salah password. Saat sesi berjalan, `dongleMonitor` memeriksa berkas `.sdk` **tiap 1 detik** dan serial flashdisk **tiap 10 detik**. Bila dongle dicabut, kunci dan sesi dihapus dari memori dan tampilan kembali ke layar login.
 
 ### 4.2 Hierarki kunci
 
 ```
 password  ─┐
            ├─ "password \0 secret_hex" ──PBKDF2(200.000, kdf_salt)──► KUNCI MASTER (32 byte, hanya di memori)
-secret .svkey (di flashdisk) ─┘                                          │
+secret .sdk (di flashdisk) ─┘                                          │
                                                                          ├─ HMAC("db")    → k_db   (ChaCha20-Poly1305 untuk isi basis data)
                                                                          └─ HMAC("wajah") → k_wajah (AES-256-GCM untuk templat wajah)
 ```
@@ -193,10 +193,10 @@ Kunci: Vigenère (huruf A–Z) dan S-DES (10 karakter `0/1`). Hasil juga mengemb
 
 - Kunci: **PBKDF2-HMAC-SHA256**, 200.000 iterasi, salt 16 byte acak, keluaran 256 bit (passphrase minimal 8 karakter).
 - Cipher: **AES-256-GCM**, IV 12 byte.
-- Format berkas `.svlt`:
+- Format berkas `.enc`:
 
 ```
-"SVLT1" (5) | salt (16) | iv (12) | tag (16) | ciphertext
+"SKRY1" (5) | salt (16) | iv (12) | tag (16) | ciphertext
 ciphertext = AES-GCM( panjangNama (2 byte) | nama berkas asli | isi berkas )
 ```
 
@@ -233,9 +233,9 @@ PBKDF2-HMAC-SHA256, 210.000 iterasi, salt acak 16 byte, pembandingan `timingSafe
 
 ### 5.9 Dongle USB — `security/dongle.js`
 
-- Berkas `.svkey` di akar flashdisk berisi `secret` (32 byte acak).
+- Berkas `.sdk` di akar flashdisk berisi `secret` (32 byte acak).
 - Basis data menyimpan `dongle_tag = HMAC-SHA256(kunci = secret, pesan = serial flashdisk)`.
-- `.svkey` yang disalin ke flashdisk lain ditolak karena serial berbeda.
+- `.sdk` yang disalin ke flashdisk lain ditolak karena serial berbeda.
 - Beberapa akun boleh memakai flashdisk yang sama (secret yang sudah ada dipakai ulang).
 
 ### 5.10 Pengenalan wajah — `security/wajah.js`, `renderer/wajah*.js`
@@ -249,7 +249,7 @@ PBKDF2-HMAC-SHA256, 210.000 iterasi, salt acak 16 byte, pembandingan `timingSafe
 
 ## 6. Skema Basis Data
 
-Berkas: `securevault.db` (SQLite) di folder data aplikasi.
+Berkas: `sandikarya.db` (SQLite) di folder data aplikasi.
 
 | Tabel | Isi utama |
 |---|---|
@@ -269,7 +269,7 @@ Komunikasi dilakukan dengan **pertukaran berkas**, tanpa server.
 Kedua pengguna menyepakati **satu passphrase** di luar aplikasi. Kunci master percakapan:
 
 ```
-master = PBKDF2( passphrase, salt = SHA256("securevault-percakapan-v1|" + sort(userA, userB))[0..16] )
+master = PBKDF2( passphrase, salt = SHA256("sandikarya-percakapan-v1|" + sort(userA, userB))[0..16] )
 ```
 
 Karena salt berasal dari dua username yang diurutkan, **kedua laptop menurunkan kunci yang sama tanpa saling mengirim apa pun**. Subkunci (HMAC-SHA256 dari master):
@@ -280,10 +280,10 @@ Karena salt berasal dari dua username yang diurutkan, **kedua laptop menurunkan 
 | `kcv` | kode cek kunci 6 digit hex untuk dibandingkan di kedua laptop |
 | `vigenere` | 12 huruf A–Z |
 | `sdes` | 10 bit |
-| `berkas` | passphrase pengganti untuk berkas `.svlt` |
+| `berkas` | passphrase pengganti untuk berkas `.enc` |
 | `gambar` | passphrase pengganti untuk steganografi |
 
-### 7.2 Pesan teks (`.svmsg`)
+### 7.2 Pesan teks (`.enc`)
 
 ```json
 { "v": 1, "dari": "...", "ke": "...", "seq": 1, "waktu": 0, "id": "...", "token": "...", "mac": "..." }
@@ -296,7 +296,7 @@ Karena salt berasal dari dua username yang diurutkan, **kedua laptop menurunkan 
 
 ### 7.3 Berkas dan gambar untuk kontak
 
-- Berkas: format `.svlt` (AES-256-GCM) dengan kunci `kunci.berkas`.
+- Berkas: format `.enc` (AES-256-GCM) dengan kunci `kunci.berkas`.
 - Gambar: pesan dienkripsi AES-256-GCM lalu disisipkan LSB dengan kunci `kunci.gambar`.
 
 ### 7.4 Alur
@@ -307,7 +307,7 @@ sequenceDiagram
   participant M as Media pindah (flashdisk/email)
   participant B as Laptop B
   Note over A,B: Sepakati passphrase di luar aplikasi,\nlalu masing-masing buat percakapan\n(bandingkan KCV)
-  A->>A: Tulis pesan → super enkripsi + HMAC → simpan .svmsg
+  A->>A: Tulis pesan → super enkripsi + HMAC → simpan .enc
   A->>M: Salin berkas
   M->>B: Terima berkas
   B->>B: Impor → cek tujuan, pengirim, HMAC, seq → dekripsi → riwayat
@@ -363,7 +363,7 @@ Tanpa `--data-dir`, aplikasi memakai folder data bawaan Electron (`userData`).
 
 ## 10. Panduan Penggunaan
 
-1. **Buat akun**: colokkan **satu** flashdisk, isi username (3–30 karakter) dan password (8–100 karakter). Berkas `.svkey` ditulis ke flashdisk. **Jangan hilangkan flashdisk ini.**
+1. **Buat akun**: colokkan **satu** flashdisk, isi username (3–30 karakter) dan password (8–100 karakter). Berkas `.sdk` ditulis ke flashdisk. **Jangan hilangkan flashdisk ini.**
 2. **Login**: flashdisk harus terpasang, lalu username + password. Bila wajah sudah didaftarkan, lanjut ke verifikasi kamera.
 3. **Daftarkan wajah** (opsional): menu *Face Recognition*, ambil 3–5 foto.
 4. Fitur setelah login:
@@ -371,7 +371,7 @@ Tanpa `--data-dir`, aplikasi memakai folder data bawaan Electron (`userData`).
 | Menu | Fungsi |
 |---|---|
 | Pesan | super enkripsi/dekripsi teks (Vigenère + S-DES) |
-| File | enkripsi/dekripsi berkas ke `.svlt` |
+| File | enkripsi/dekripsi berkas ke `.enc` |
 | Gambar | sisipkan/ekstrak pesan rahasia di PNG |
 | Aset | blockchain: daftarkan, transfer, validasi, uji perusakan blok |
 | Chat | komunikasi dua laptop (lihat bagian 7) |
@@ -418,7 +418,7 @@ node tools/ws-client.js ws://localhost:8765 nama
 - Kekuatan chat bergantung pada **kekuatan passphrase bersama** dan bagaimana passphrase itu dibagikan.
 - Deteksi dongle **khusus Windows**.
 - Pemantauan dongle dan verifikasi wajah berjalan di sisi aplikasi; wajah bukan pengganti kriptografi, hanya lapisan autentikasi tambahan. Tidak ada deteksi *liveness* (antispoof dimatikan).
-- Folder data pengguna (`data/`, `*.db`, `*.svkey`, `.env`) sudah dikecualikan di `.gitignore`.
+- Folder data pengguna (`data/`, `*.db`, `*.sdk`, `.env`) sudah dikecualikan di `.gitignore`.
 
 ---
 

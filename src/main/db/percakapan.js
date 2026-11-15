@@ -66,7 +66,7 @@ function simpanPesan(percakapanId, arah, seq, waktu, penting, teks, kunciDb) {
     .run(percakapanId, arah, seq, waktu, penting ? 1 : 0, blob);
 }
 
-// Mencatat pesan keluar setelah berkas .svmsg berhasil ditulis
+// Mencatat pesan keluar setelah berkas .enc berhasil ditulis
 function catatKeluar(percakapanId, seq, waktu, penting, teks, kunciDb) {
   db.ambil().prepare('UPDATE percakapan SET seq_kirim = ? WHERE id = ?').run(seq, percakapanId);
   simpanPesan(percakapanId, 'keluar', seq, waktu, penting, teks, kunciDb);
