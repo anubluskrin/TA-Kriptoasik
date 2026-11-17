@@ -5,6 +5,7 @@ const session = require('../auth/session');
 const percakapan = require('../db/percakapan');
 const { turunkanMaster, subkunci } = require('../chat/kunciPercakapan');
 const amplop = require('../chat/amplop');
+const { terimaAmplop } = require('../chat/terima');
 
 const MAKS_BERKAS = 200 * 1024;
 
@@ -92,23 +93,9 @@ async function imporPesan(event) {
   let diterima = 0;
   for (const { nama, isi: a } of daftar) {
     try {
-      if (!a || typeof a.dari !== 'string') throw new Error('berkas bukan pesan Sandikarya yang valid');
-      const id = percakapan.cariKontak(saya.id, a.dari);
-      if (!id) throw new Error(`belum ada percakapan dengan ${a.dari}`);
-
-      const p = percakapan.ambil(saya.id, id, kDb);
-      const kunci = subkunci(p.master);
-      p.master.fill(0);
-
-      const hasil = amplop.verifikasi(a, {
-        saya: saya.username,
-        kontak: p.kontak,
-        kunci,
-        seqTerakhir: p.seqTerima,
-      });
-      percakapan.catatMasuk(p.id, hasil.seq, hasil.waktu, hasil.teks, kDb);
+      const hasil = terimaAmplop(saya, kDb, a);
       diterima++;
-      ringkasan.push(`${nama}: diterima (dari ${a.dari}, nomor ${hasil.seq})`);
+      ringkasan.push(`${nama}: diterima (dari ${hasil.dari}, nomor ${hasil.seq})`);
     } catch (err) {
       ringkasan.push(`${nama}: ditolak, ${err.message}`);
     }

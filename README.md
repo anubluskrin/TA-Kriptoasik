@@ -453,4 +453,4 @@ node tools/ws-client.js ws://localhost:8765 nama
 
 ## Lisensi
 
-ISC (lihat `package.json`).
+ISC (lihat `package.json`).  

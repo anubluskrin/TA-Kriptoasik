@@ -15,7 +15,21 @@ function mulai(dataPengguna, kunci, opsi) {
   perluDaftarWajah = Boolean(opsi && opsi.daftarWajah);
 }
 
+const pendengarAkhir = [];
+
+// Mendaftarkan fungsi yang dipanggil setiap sesi berakhir (keluar, dongle dicabut), mis. memutus sambungan jaringan
+function saatAkhiri(fn) {
+  pendengarAkhir.push(fn);
+}
+
 function akhiri() {
+    for (const fn of pendengarAkhir) {
+    try {
+      fn();
+    } catch {
+      // pembersihan tambahan tidak boleh menggagalkan proses keluar
+    }
+  }
   if (kunciMaster) kunciMaster.fill(0);
   kunciMaster = null;
   pengguna = null;
@@ -78,6 +92,7 @@ function subkunci(label) {
 module.exports = {
   mulai,
   akhiri,
+  saatAkhiri,
   sudahMasuk,
   menungguWajah,
   menungguDaftarWajah,

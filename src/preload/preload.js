@@ -48,5 +48,12 @@ contextBridge.exposeInMainWorld('api', {
   chatTerimaBerkas: (id) => ipcRenderer.invoke('chat:terimaBerkas', id),
   chatKirimGambar: (id, pesan) => ipcRenderer.invoke('chat:kirimGambar', id, pesan),
   chatTerimaGambar: (id) => ipcRenderer.invoke('chat:terimaGambar', id),
+  jaringanStatus: () => ipcRenderer.invoke('jaringan:status'),
+  jaringanDengarkan: () => ipcRenderer.invoke('jaringan:dengarkan'),
+  jaringanSambung: (alamat) => ipcRenderer.invoke('jaringan:sambung', alamat),
+  jaringanPutus: () => ipcRenderer.invoke('jaringan:putus'),
+  chatKirimLangsung: (id, teks, penting) => ipcRenderer.invoke('chat:kirimLangsung', id, teks, penting),
+  onJaringan: (pemanggil) => ipcRenderer.on('event:jaringan', (_event, status) => pemanggil(status)),
+  onPesanMasuk: (pemanggil) => ipcRenderer.on('event:pesan-masuk', (_event, info) => pemanggil(info)),
   
 });

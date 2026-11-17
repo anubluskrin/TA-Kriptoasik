@@ -230,7 +230,20 @@
         <!-- Percakapan -->
     <section id="page-chat" class="page">
       <h1>Percakapan</h1>
-      <p>Kirim pesan ke pengguna di laptop lain. Kedua pihak menyepakati satu passphrase di luar aplikasi. Pesan dikirim sebagai berkas .enc yang dipindahkan secara manual.</p>
+      <p>Kirim pesan ke pengguna di laptop lain. Kedua pihak menyepakati satu passphrase di luar aplikasi. Pesan bisa dikirim langsung lewat sambungan jaringan, atau sebagai berkas .enc yang dipindahkan manual bila jaringan bermasalah.</p>
+
+          <h2>Sambungan langsung</h2>
+      <p>Kedua laptop harus berada di jaringan yang sama (WiFi atau hotspot HP). Satu laptop menekan Mulai menerima lalu memberi tahu alamat IP yang tampil. Laptop lainnya memasukkan alamat itu dan menekan Sambungkan.</p>
+      <div class="baris-tombol">
+        <button id="jar-dengarkan" class="aksi">Mulai menerima</button>
+      </div>
+      <label for="jar-alamat">Alamat IP laptop lawan bicara</label>
+      <input id="jar-alamat" type="text" placeholder="contoh: 192.168.43.10" autocomplete="off" />
+      <div class="baris-tombol">
+        <button id="jar-sambung" class="aksi sekunder">Sambungkan</button>
+        <button id="jar-putus" class="aksi sekunder">Putuskan</button>
+      </div>
+      <p id="jar-status" class="status">Belum ada sambungan</p>
 
       <h2>Buat percakapan baru</h2>
       <label for="chat-kontak">Username kontak (akun di laptop lawan bicara)</label>
@@ -250,7 +263,8 @@
       <textarea id="chat-teks" rows="4"></textarea>
       <label class="baris-centang"><input id="chat-penting" type="checkbox" /> Tandai sebagai penting</label>
       <div class="baris-tombol">
-        <button id="chat-kirim" class="aksi">Buat berkas pesan (.enc)</button>
+        <button id="chat-kirim-langsung" class="aksi">Kirim langsung</button>
+        <button id="chat-kirim" class="aksi sekunder">Buat berkas pesan (.enc)</button>
         <button id="chat-impor" class="aksi sekunder">Impor berkas pesan (.enc)</button>
       </div>
       <p id="chat-status" class="status"></p>

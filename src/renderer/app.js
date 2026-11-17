@@ -620,6 +620,67 @@ document.getElementById('chat-impor').addEventListener('click', async () => {
   muatPercakapan();
 });
 
+// Kirim langsung lewat sambungan jaringan
+document.getElementById('chat-kirim-langsung').addEventListener('click', async () => {
+  const id = idChatDipilih();
+  if (id === null) {
+    statusChat('Gagal: pilih atau buat percakapan dulu', false);
+    return;
+  }
+  statusChat('Mengirim...', true);
+  const r = await window.api.chatKirimLangsung(id, elChatTeks.value, elChatPenting.checked);
+  if (!r.ok) {
+    statusChat('Gagal: ' + r.galat, false);
+    return;
+  }
+  elChatTeks.value = '';
+  elChatPenting.checked = false;
+  statusChat(r.pesan, true);
+  muatPercakapan(id);
+});
+
+// Sambungan langsung antar laptop
+const elJarStatus = document.getElementById('jar-status');
+const elJarAlamat = document.getElementById('jar-alamat');
+
+function tampilkanJaringan(s) {
+  let teks = 'Belum ada sambungan';
+  if (s.mode === 'mendengar') {
+    teks = `Menunggu sambungan di port ${s.port}. Alamat laptop ini: ${s.alamat.join(', ') || '(tidak terdeteksi)'}`;
+  }
+  if (s.mode === 'terhubung') teks = `Terhubung dengan ${s.rekan}`;
+  elJarStatus.textContent = teks;
+  elJarStatus.className = 'status ' + (s.mode === 'mati' ? '' : 'sukses');
+}
+
+async function jalankanJaringan(pemanggil) {
+  elJarStatus.textContent = 'Memproses...';
+  elJarStatus.className = 'status';
+  const r = await pemanggil();
+  if (!r.ok) {
+    elJarStatus.textContent = 'Gagal: ' + r.galat;
+    elJarStatus.className = 'status galat';
+    return;
+  }
+  tampilkanJaringan(r);
+}
+
+document.getElementById('jar-dengarkan').addEventListener('click', () =>
+  jalankanJaringan(() => window.api.jaringanDengarkan())
+);
+document.getElementById('jar-sambung').addEventListener('click', () =>
+  jalankanJaringan(() => window.api.jaringanSambung(elJarAlamat.value.trim()))
+);
+document.getElementById('jar-putus').addEventListener('click', () =>
+  jalankanJaringan(() => window.api.jaringanPutus())
+);
+
+window.api.onJaringan((s) => tampilkanJaringan(s));
+window.api.onPesanMasuk((info) => {
+  statusChat(`Pesan baru dari ${info.dari} (nomor ${info.seq})`, true);
+  muatPercakapan();
+});
+
 // Berkas dan gambar untuk kontak
 async function jalankanMedia(pemanggil) {
   const id = idChatDipilih();
