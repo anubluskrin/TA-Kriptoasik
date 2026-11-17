@@ -134,4 +134,14 @@ describe('app.js dijalankan dengan DOM tiruan', () => {
     await pendengar['login-tombol:click'][0]();
     expect(panggilan.find(([nama]) => nama === 'authDaftar')).toEqual(['authDaftar', 'hasan', 'rahasia-banget']);
   });
+
+    it('setiap berkas *.ipc.js diimpor dan didaftarkan di ipc/index.js', () => {
+    const index = baca('src/main/ipc/index.js');
+    const berkas = fs.readdirSync(path.join(akar, 'src/main/ipc')).filter((f) => f.endsWith('.ipc.js'));
+    const belum = berkas.filter((f) => {
+      const nama = f.replace('.ipc.js', '') + 'Ipc';
+      return !index.includes(`require('./${f.replace('.js', '')}')`) || !index.includes(`${nama}.daftarkan()`);
+    });
+    expect(belum).toEqual([]);
+  });
 });

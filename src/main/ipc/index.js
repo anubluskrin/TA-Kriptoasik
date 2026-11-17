@@ -9,6 +9,7 @@ const dongleIpc = require('./dongle.ipc');
 const chatIpc = require('./chat.ipc');
 const chatMediaIpc = require('./chatMedia.ipc');
 const wajahIpc = require('./wajah.ipc');
+const jaringanIpc = require('./jaringan.ipc');
 const { daftarkanDenganGerbang } = require('./gerbang');
 
 function daftarkanSemuaIpc() {
@@ -25,6 +26,7 @@ function daftarkanSemuaIpc() {
     chatIpc.daftarkan();
     chatMediaIpc.daftarkan();
     wajahIpc.daftarkan();
+    jaringanIpc.daftarkan();
   });
 }
 
