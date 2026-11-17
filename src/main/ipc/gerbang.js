@@ -14,6 +14,8 @@ const KEJADIAN = {
   'auth:keluar': ['LOGOUT', null],
   'chat:kirim': ['PESAN_DIKIRIM', null],
   'chat:kirimLangsung': ['PESAN_DIKIRIM', null],
+  'chat:kirimBerkasLangsung': ['BERKAS_DIKIRIM', null],
+  'chat:kirimGambarLangsung': ['GAMBAR_DIKIRIM', null],
   'chat:impor': ['PESAN_DITERIMA', 'PESAN_DITOLAK'],
   'chat:kirimBerkas': ['BERKAS_DIKIRIM', null],
   'chat:terimaBerkas': ['BERKAS_DITERIMA', 'BERKAS_DITOLAK'],

@@ -5,6 +5,7 @@ const amplop = require('../src/main/chat/amplop');
 // Dua "laptop" dalam satu proses: masing-masing punya Tautan sendiri dan penyimpanan pesan tiruan.
 async function buatLaptop(username, kunci, seqAwal = 0) {
   const masuk = [];
+  const media = [];
   let seqTerima = seqAwal;
   const tautan = new Tautan({
     ambilUsername: () => username,
@@ -13,8 +14,12 @@ async function buatLaptop(username, kunci, seqAwal = 0) {
       seqTerima = hasil.seq;
       masuk.push(hasil.teks);
     },
+      saatMedia: (jenis, data) => {
+      if (data.toString() === 'RUSAK') throw new Error('kunci berbeda');
+      media.push([jenis, data.toString()]);
+    },
   });
-  return { tautan, masuk };
+  return { tautan, masuk, media };
 }
 
 describe('Tautan (sambungan langsung)', () => {
@@ -101,5 +106,25 @@ describe('Tautan (sambungan langsung)', () => {
   it('alamat tidak valid dan tujuan tak terjangkau memberi galat, bukan crash', async () => {
     await expect(budi.tautan.sambung('a b;c')).rejects.toThrow(/Alamat tidak valid/);
     await expect(budi.tautan.sambung('127.0.0.1', 1)).rejects.toThrow(/Tidak bisa terhubung/);
+  });
+
+    it('berkas dan gambar terenkripsi sampai utuh ke sisi lawan', async () => {
+    await hubungkan();
+    const isi = Buffer.from([0, 255, 1, 254, 65, 66]);
+    await budi.tautan.kirimMedia('berkas', 'hasan', isi);
+    await budi.tautan.kirimMedia('gambar', 'hasan', Buffer.from('PNG-PALSU'));
+    expect(hasan.media[0][0]).toBe('berkas');
+    expect(Buffer.from(hasan.media[0][1], 'latin1').length).toBe(isi.length);
+    expect(hasan.media[1]).toEqual(['gambar', 'PNG-PALSU']);
+  });
+
+  it('kiriman yang ditolak penerima menjadi galat di pengirim', async () => {
+    await hubungkan();
+    await expect(budi.tautan.kirimMedia('berkas', 'hasan', Buffer.from('RUSAK'))).rejects.toThrow(/Ditolak hasan: kunci berbeda/);
+  });
+
+  it('kiriman lebih dari 12 MB ditolak dengan petunjuk memakai berkas manual', async () => {
+    await hubungkan();
+    await expect(budi.tautan.kirimMedia('berkas', 'hasan', Buffer.alloc(12 * 1024 * 1024 + 1))).rejects.toThrow(/maksimal 12 MB/);
   });
 });

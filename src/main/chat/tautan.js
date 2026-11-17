@@ -1,9 +1,11 @@
 const os = require('node:os');
+const crypto = require('node:crypto');
 const { WebSocketServer, WebSocket } = require('ws');
 
 const PORT_BAWAAN = 8765;
-const MAKS_FRAME = 256 * 1024;
-const BATAS_BALASAN = 8000;
+const MAKS_MEDIA = 12 * 1024 * 1024; // berkas/gambar terenkripsi yang boleh lewat sambungan langsung
+const MAKS_FRAME = 17 * 1024 * 1024; // cukup untuk MAKS_MEDIA setelah Base64
+const BATAS_BALASAN = 30000;
 const BATAS_HALO = 5000;
 
 // Sambungan langsung antar dua laptop lewat WebSocket. Isi yang lewat sudah berupa amplop terenkripsi
@@ -12,6 +14,7 @@ const BATAS_HALO = 5000;
 // Bingkai (JSON):
 //   { t: 'halo',  dari }              perkenalan, dikirim kedua pihak saat tersambung
 //   { t: 'pesan', amplop }            amplop pesan
+//   { t: 'berkas'|'gambar', id, data } berkas .enc atau PNG stego (Base64), sudah terenkripsi
 //   { t: 'ack',   id }                amplop diterima dan lolos pemeriksaan
 //   { t: 'tolak', id, alasan }        amplop ditolak (passphrase beda, nomor urut lama, dan sebagainya)
 
@@ -29,9 +32,10 @@ class Tautan {
   // ambilUsername: () => username akun yang sedang login (melempar galat bila belum login)
   // saatPesan:     (amplop, rekan) => memproses amplop masuk; melempar galat bila harus ditolak
   // saatBerubah:   (status) => dipanggil setiap status sambungan berubah
-  constructor({ ambilUsername, saatPesan, saatBerubah = () => {} }) {
+  constructor({ ambilUsername, saatPesan, saatMedia, saatBerubah = () => {} }) {
     this.ambilUsername = ambilUsername;
     this.saatPesan = saatPesan;
+    this.saatMedia = saatMedia;     // saatMedia: (jenis, data, rekan) => memproses berkas/gambar masuk; melempar galat bila harus ditolak.
     this.saatBerubah = saatBerubah;
     this.server = null;
     this.soket = null;
@@ -156,6 +160,20 @@ class Tautan {
       return;
     }
 
+    if (f.t === 'berkas' || f.t === 'gambar') {
+      const id = typeof f.id === 'string' ? f.id : '';
+      let balasan;
+      try {
+        if (typeof f.data !== 'string' || !this.saatMedia) throw new Error('Kiriman tidak valid');
+        await this.saatMedia(f.t, Buffer.from(f.data, 'base64'), this.rekan);
+        balasan = { t: 'ack', id };
+      } catch (err) {
+        balasan = { t: 'tolak', id, alasan: err.message };
+      }
+      if (soket.readyState === WebSocket.OPEN) soket.send(JSON.stringify(balasan));
+      return;
+    }
+
     if (f.t === 'ack' || f.t === 'tolak') {
       const m = this.menunggu.get(f.id);
       if (!m) return;
@@ -166,20 +184,33 @@ class Tautan {
   }
 
   kirimPesan(a) {
+    return this.kirimBingkai(a.id, a.ke, { t: 'pesan', amplop: a });
+  }
+
+  // jenis: 'berkas' atau 'gambar'; data: Buffer yang sudah terenkripsi
+  kirimMedia(jenis, ke, data) {
+    if (data.length > MAKS_MEDIA) {
+      return Promise.reject(new Error('Terlalu besar untuk sambungan langsung (maksimal 12 MB). Pakai berkas .enc manual.'));
+    }
+    const id = crypto.randomBytes(8).toString('hex');
+    return this.kirimBingkai(id, ke, { t: jenis, id, data: data.toString('base64') });
+  }
+
+  kirimBingkai(id, ke, bingkai) {
     if (!this.soket || !this.rekan) return Promise.reject(new Error('Belum terhubung ke laptop lain'));
-    if (a.ke !== this.rekan) {
-      return Promise.reject(new Error(`Sedang terhubung dengan ${this.rekan}, bukan ${a.ke}`));
+    if (ke !== this.rekan) {
+      return Promise.reject(new Error(`Sedang terhubung dengan ${this.rekan}, bukan ${ke}`));
     }
     return new Promise((selesai, gagal) => {
       const timer = setTimeout(() => {
-        this.menunggu.delete(a.id);
+        this.menunggu.delete(id);
         gagal(new Error('Tidak ada balasan dari lawan bicara'));
       }, BATAS_BALASAN);
-      this.menunggu.set(a.id, {
+      this.menunggu.set(id, {
         selesai: () => (clearTimeout(timer), selesai()),
         gagal: (err) => (clearTimeout(timer), gagal(err)),
       });
-      this.soket.send(JSON.stringify({ t: 'pesan', amplop: a }));
+      this.soket.send(JSON.stringify(bingkai));
     });
   }
 

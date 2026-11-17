@@ -677,7 +677,7 @@ document.getElementById('jar-putus').addEventListener('click', () =>
 
 window.api.onJaringan((s) => tampilkanJaringan(s));
 window.api.onPesanMasuk((info) => {
-  statusChat(`Pesan baru dari ${info.dari} (nomor ${info.seq})`, true);
+  statusChat(info.ringkasan, true);
   muatPercakapan();
 });
 
@@ -716,4 +716,11 @@ document.getElementById('chat-kirim-gambar').addEventListener('click', async () 
 });
 document.getElementById('chat-terima-gambar').addEventListener('click', () =>
   jalankanMedia((id) => window.api.chatTerimaGambar(id))
+);
+document.getElementById('chat-kirim-berkas-langsung').addEventListener('click', () =>
+  jalankanMedia((id) => window.api.chatKirimBerkasLangsung(id))
+);
+
+document.getElementById('chat-kirim-gambar-langsung').addEventListener('click', () =>
+  jalankanMedia((id) => window.api.chatKirimGambarLangsung(id, elChatGambarPesan.value))
 );

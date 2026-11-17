@@ -136,4 +136,4 @@ function daftarkan() {
   ipcMain.handle('chat:terimaGambar', (event, id) => jalankan(() => terimaGambar(event, id)));
 }
 
-module.exports = { daftarkan };
+module.exports = { daftarkan, siapkan, pilihBerkas };
