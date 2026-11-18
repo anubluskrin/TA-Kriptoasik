@@ -222,25 +222,10 @@ document.getElementById('aset-daftarkan').addEventListener('click', () => {
   );
 });
 
-document.getElementById('aset-transfer').addEventListener('click', () => {
-  jalankanAset(() =>
-    window.api.asetTransfer(nilaiAset('aset-id-transfer'), nilaiAset('aset-dari'), nilaiAset('aset-ke'))
-  );
-});
-
-document.getElementById('aset-rusakkan').addEventListener('click', () => {
-  jalankanAset(() =>
-    window.api.asetRusakkan(parseInt(nilaiAset('aset-blok-rusak'), 10), nilaiAset('aset-nilai-palsu'))
-  );
-});
-
 document.getElementById('aset-validasi').addEventListener('click', () => {
   jalankanAset(() => window.api.asetValidasi());
 });
 
-document.getElementById('aset-reset').addEventListener('click', () => {
-  jalankanAset(() => window.api.asetReset());
-});
 
 document.getElementById('aset-serahkan').addEventListener('click', () => {
   jalankanAset(async () => {
@@ -539,7 +524,6 @@ const elChatPass = document.getElementById('chat-passphrase');
 const elChatPilih = document.getElementById('chat-pilih');
 const elChatKcv = document.getElementById('chat-kcv');
 const elChatTeks = document.getElementById('chat-teks');
-const elChatPenting = document.getElementById('chat-penting');
 const elChatStatus = document.getElementById('chat-status');
 const elChatRiwayat = document.getElementById('chat-riwayat');
 let daftarChat = [];
@@ -623,7 +607,7 @@ document.getElementById('chat-kirim').addEventListener('click', async () => {
     statusChat('Gagal: pilih atau buat percakapan dulu', false);
     return;
   }
-  const r = await window.api.chatKirim(id, elChatTeks.value, elChatPenting.checked);
+  const r = await window.api.chatKirim(id, elChatTeks.value);
   if (!r.ok) {
     statusChat('Gagal: ' + r.galat, false);
     return;
@@ -633,7 +617,6 @@ document.getElementById('chat-kirim').addEventListener('click', async () => {
     return;
   }
   elChatTeks.value = '';
-  elChatPenting.checked = false;
   statusChat(r.pesan, true);
   muatPercakapan(id);
 });
@@ -660,7 +643,7 @@ document.getElementById('chat-kirim-langsung').addEventListener('click', async (
     return;
   }
   statusChat('Mengirim...', true);
-  const r = await window.api.chatKirimLangsung(id, elChatTeks.value, elChatPenting.checked);
+  const r = await window.api.chatKirimLangsung(id, elChatTeks.value);
   if (!r.ok) {
     statusChat('Gagal: ' + r.galat, false);
     return;

@@ -15,11 +15,8 @@ contextBridge.exposeInMainWorld('api', {
 
   asetStatus: () => ipcRenderer.invoke('aset:status'),
   asetDaftarkan: (idAset, nama, pemilik) => ipcRenderer.invoke('aset:daftarkan', idAset, nama, pemilik),
-  asetTransfer: (idAset, dari, ke) => ipcRenderer.invoke('aset:transfer', idAset, dari, ke),
   asetValidasi: () => ipcRenderer.invoke('aset:validasi'),
-  asetRusakkan: (nomor, nilai) => ipcRenderer.invoke('aset:rusakkan', nomor, nilai),
-  asetReset: () => ipcRenderer.invoke('aset:reset'),
-
+ 
   authStatus: () => ipcRenderer.invoke('auth:status'),
   authDaftar: (username, password) => ipcRenderer.invoke('auth:daftar', username, password),
   authMasuk: (username, password) => ipcRenderer.invoke('auth:masuk', username, password),

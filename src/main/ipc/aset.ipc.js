@@ -62,46 +62,8 @@ function daftarkan() {
     )
   );
 
-  ipcMain.handle('aset:transfer', (event, idAset, dari, ke) =>
-    jalankan(() =>
-      tambahTransaksi({
-        tipe: 'TRANSFER',
-        idAset: teks(idAset, 'ID aset'),
-        dari: teks(dari, 'Pengirim'),
-        ke: teks(ke, 'Pemilik baru'),
-      })
-    )
-  );
-
   ipcMain.handle('aset:validasi', () => jalankan(async () => ringkasan(await bacaRantai())));
 
-  // Hanya untuk uji/demo: mengubah isi satu blok TANPA menghitung ulang hash,
-  // meniru penyerang yang memalsukan data.
-  ipcMain.handle('aset:rusakkan', (event, nomor, nilai) =>
-    jalankan(async () => {
-      const rantai = await bacaRantai();
-      if (!Number.isInteger(nomor) || nomor < 1 || nomor >= rantai.length) {
-        throw new Error('Nomor blok tidak ada (blok 0 adalah genesis)');
-      }
-      const nilaiBersih = teks(nilai, 'Nilai palsu');
-      if (nilaiBersih.length === 0 || nilaiBersih.length > 60) throw new Error('Nilai palsu 1 sampai 60 karakter');
-
-      const data = rantai[nomor].data;
-      if (data.tipe === 'REGISTER') data.pemilik = nilaiBersih;
-      else if (data.tipe === 'AUDIT') data.pelaku = nilaiBersih;
-      else data.ke = nilaiBersih;
-      await tulisRantai(rantai);
-      return { ...ringkasan(rantai), pesan: `Isi blok #${nomor} diubah tanpa menghitung ulang hash` };
-    })
-  );
-
-  ipcMain.handle('aset:reset', () =>
-    jalankan(async () => {
-      const rantai = [chain.buatGenesis()];
-      await tulisRantai(rantai);
-      return { ...ringkasan(rantai), pesan: 'Rantai dikembalikan ke blok genesis' };
-    })
-  );
 }
 
 module.exports = { daftarkan };

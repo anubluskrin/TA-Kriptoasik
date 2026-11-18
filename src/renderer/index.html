@@ -166,31 +166,13 @@
       <label for="aset-nama">Nama aset</label>
       <input id="aset-nama" type="text" value="Laptop Dell" autocomplete="off" />
       <label for="aset-pemilik">Pemilik</label>
-      <input id="aset-pemilik" type="text" value="Andi" autocomplete="off" />
+      <input id="aset-pemilik" type="text" placeholder="isi dengan username akunmu" autocomplete="off" />
       <div class="baris-tombol">
         <button id="aset-daftarkan" class="aksi">Daftarkan aset</button>
       </div>
 
-      <h2>Transfer aset</h2>
-      <label for="aset-id-transfer">ID aset</label>
-      <input id="aset-id-transfer" type="text" value="LAP-01" autocomplete="off" />
-      <label for="aset-dari">Pengirim (harus pemilik saat ini)</label>
-      <input id="aset-dari" type="text" value="Andi" autocomplete="off" />
-      <label for="aset-ke">Pemilik baru</label>
-      <input id="aset-ke" type="text" value="Citra" autocomplete="off" />
       <div class="baris-tombol">
-        <button id="aset-transfer" class="aksi">Transfer</button>
-      </div>
-
-      <h2>Uji keamanan rantai</h2>
-      <label for="aset-blok-rusak">Nomor blok yang dipalsukan</label>
-      <input id="aset-blok-rusak" type="text" value="1" inputmode="numeric" autocomplete="off" />
-      <label for="aset-nilai-palsu">Nama pemilik palsu</label>
-      <input id="aset-nilai-palsu" type="text" value="Penjahat" autocomplete="off" />
-      <div class="baris-tombol">
-        <button id="aset-rusakkan" class="aksi sekunder">Palsukan isi blok</button>
         <button id="aset-validasi" class="aksi sekunder">Validasi rantai</button>
-        <button id="aset-reset" class="aksi sekunder">Reset rantai</button>
       </div>
 
       <p id="aset-status" class="status"></p>
@@ -224,16 +206,6 @@
         <button id="audit-validasi" class="aksi sekunder">Validasi rantai</button>
       </div>
       <p id="audit-status" class="status"></p>
-
-      <h2>Uji pemalsuan</h2>
-      <label for="audit-blok-rusak">Nomor blok yang dipalsukan</label>
-      <input id="audit-blok-rusak" type="text" value="1" inputmode="numeric" autocomplete="off" />
-      <label for="audit-nilai-palsu">Nama pelaku palsu</label>
-      <input id="audit-nilai-palsu" type="text" value="Penyusup" autocomplete="off" />
-      <div class="baris-tombol">
-        <button id="audit-rusakkan" class="aksi sekunder">Palsukan isi blok</button>
-        <button id="audit-reset" class="aksi sekunder">Reset rantai</button>
-      </div>
 
       <h2>Riwayat kejadian</h2>
       <pre id="audit-daftar" class="keluaran"></pre>
@@ -273,7 +245,6 @@
 
       <label for="chat-teks">Pesan</label>
       <textarea id="chat-teks" rows="4"></textarea>
-      <label class="baris-centang"><input id="chat-penting" type="checkbox" /> Tandai sebagai penting</label>
       <div class="baris-tombol">
         <button id="chat-kirim-langsung" class="aksi">Kirim langsung</button>
         <button id="chat-kirim" class="aksi sekunder">Buat berkas pesan (.enc)</button>

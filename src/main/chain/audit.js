@@ -35,7 +35,7 @@ function tambahBlok(data) {
     if (!lokasi) throw new Error('Lokasi rantai belum diatur');
     const rantai = await bacaRantai();
     if (!chain.validasiRantai(rantai).valid) {
-      throw new Error('Rantai rusak, blok baru tidak bisa ditambahkan. Gunakan Reset rantai.');
+      throw new Error('Rantai rusak, blok baru tidak bisa ditambahkan. Kembalikan isi berkas rantai.json ke aslinya, atau hapus berkas itu untuk memulai rantai baru.');
     }
     const draft = chain.siapkanBlok(rantai, data);
     const { blok, ms } = await tambang(draft);
