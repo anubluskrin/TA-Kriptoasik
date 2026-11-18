@@ -483,6 +483,18 @@ async function perbaruiDongle() {
       elLoginDongle.textContent = r.ok ? 'Pasang flashdisk dongle' : 'Gagal membaca flashdisk: ' + r.galat;
       elLoginDongle.className = 'status galat';
     }
+  } else {
+    // Cadangan: sesi di proses utama sudah berakhir (mis. dongle dicabut) tetapi tampilan belum berpindah
+    const s = await window.api.authStatus();
+    if (s.ok && !s.masuk) {
+      try {
+        sessionStorage.setItem('pesanKunci', 'Sesi berakhir (flashdisk dicabut atau keluar). Aplikasi dikunci.');
+      } catch {
+        // penyimpanan tidak tersedia, pesan dilewati
+      }
+      location.reload();
+      return;
+    }
   }
   setTimeout(perbaruiDongle, 2000);
 }
