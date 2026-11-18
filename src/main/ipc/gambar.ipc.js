@@ -21,11 +21,11 @@ async function jalankan(aksi) {
   }
 }
 
-async function bacaGambarDariDialog(win, judul) {
+async function bacaGambarDariDialog(win, judul, filters = [{ name: 'Gambar PNG', extensions: ['png'] }]) {
   const pilih = await dialog.showOpenDialog(win, {
     title: judul,
     properties: ['openFile'],
-    filters: [{ name: 'Gambar PNG', extensions: ['png'] }],
+    filters,
   });
   if (pilih.canceled) return null;
 
@@ -42,7 +42,9 @@ async function sisipkanDariDialog(event, pesan, passphrase) {
   }
   const win = BrowserWindow.fromWebContents(event.sender);
 
-  const gambar = await bacaGambarDariDialog(win, 'Pilih gambar PNG pembawa pesan');
+  const gambar = await bacaGambarDariDialog(win, 'Pilih gambar pembawa pesan (PNG atau JPEG)', [
+  { name: 'Gambar PNG atau JPEG', extensions: ['png', 'jpg', 'jpeg'] },
+]);
   if (!gambar) return { dibatalkan: true };
 
   const hasil = await stegano.sisipkan(gambar.isi, pesan, passphrase);

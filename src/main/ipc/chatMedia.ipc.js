@@ -92,8 +92,8 @@ async function kirimGambar(event, idPercakapan, pesan) {
   const { p, kDb, kunci } = siapkan(idPercakapan);
   const win = BrowserWindow.fromWebContents(event.sender);
 
-  const asal = await pilihBerkas(win, `Pilih gambar PNG pembawa pesan untuk ${p.kontak}`, [
-    { name: 'Gambar PNG', extensions: ['png'] },
+  const asal = await pilihBerkas(win, `Pilih gambar pembawa pesan (PNG atau JPEG) untuk ${p.kontak}`, [
+    { name: 'Gambar PNG atau JPEG', extensions: ['png', 'jpg', 'jpeg'] },
   ]);
   if (!asal) return { dibatalkan: true };
   const info = await fs.stat(asal);

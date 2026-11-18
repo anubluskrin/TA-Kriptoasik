@@ -1,5 +1,6 @@
 const crypto = require('node:crypto');
 const { PNG } = require('pngjs');
+const jpeg = require('jpeg-js');
 const { turunkanKunci } = require('./keys');
 
 // Steganografi LSB pada PNG (kanal R, G, B; kanal alpha tidak disentuh).
@@ -17,7 +18,27 @@ const PANJANG_HEADER = PANJANG_SALT + PANJANG_IV + PANJANG_TAG + 4; // 48 byte
 const BIT_HEADER = PANJANG_HEADER * 8;
 const MAKS_PIKSEL = 40 * 1000 * 1000;
 
+function adalahJpeg(buffer) {
+  return buffer.length > 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+}
+
+// Gambar sampul: PNG atau JPEG. JPEG didekode ke piksel mentah, hasil sisip selalu PNG.
+function bacaGambar(buffer) {
+  if (!adalahJpeg(buffer)) return bacaPng(buffer);
+  let img;
+  try {
+    img = jpeg.decode(buffer, { useTArray: true, formatAsRGBA: true, maxResolutionInMP: 40 });
+  } catch {
+    throw new Error('Berkas bukan gambar JPEG yang valid');
+  }
+  if (img.width * img.height > MAKS_PIKSEL) throw new Error('Gambar terlalu besar');
+  return { width: img.width, height: img.height, data: Buffer.from(img.data) };
+}
+
 function bacaPng(buffer) {
+  if (adalahJpeg(buffer)) {
+    throw new Error('Pengambilan pesan harus dari berkas PNG hasil sisip. JPEG memakai kompresi lossy yang merusak bit tersembunyi');
+  }
   let png;
   try {
     png = PNG.sync.read(buffer);
@@ -134,7 +155,7 @@ function hitungPsnr(asli, baru) {
 
 async function sisipkan(bufferPng, pesan, passphrase) {
   if (typeof pesan !== 'string' || pesan.length === 0) throw new Error('Pesan tidak boleh kosong');
-  const png = bacaPng(bufferPng);
+  const png = bacaGambar(bufferPng);
   const asli = Buffer.from(png.data);
 
   const polos = Buffer.from(pesan, 'utf8');
@@ -162,8 +183,11 @@ async function sisipkan(bufferPng, pesan, passphrase) {
   const posisi = posisiAcak(kunciAcak, jumlahKanal(png), terenkripsi.length * 8);
   tulisBytes(png.data, terenkripsi, (n) => posisi[n]);
 
+  const keluaran = new PNG({ width: png.width, height: png.height });
+  png.data.copy(keluaran.data);
+
   return {
-    png: PNG.sync.write(png),
+    png: PNG.sync.write(keluaran),
     psnr: hitungPsnr(asli, png.data),
     kapasitas,
     ukuranPesan: polos.length,

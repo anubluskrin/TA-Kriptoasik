@@ -6,9 +6,9 @@
 - **Super enkripsi teks**: Vigenère (mod 26) lalu DES mode CBC
 - **Enkripsi file**: AES-256-GCM (format `.enc`)
 - **Enkripsi basis data**: ChaCha20-Poly1305
-- **Steganografi gambar**: LSB acak pada PNG, isi pesan dienkripsi AES-256-GCM
-- **Blockchain sederhana**: registri kepemilikan aset dan **log audit** kejadian aplikasi yang tahan ubah, dengan Proof of Work
-- **Komunikasi dua arah antar dua laptop**: pertukaran berkas pesan dan berkas terenkripsi (`.enc`) serta gambar stego (`.png`) dengan passphrase bersama.
+- **Steganografi gambar**: LSB acak; gambar sampul boleh PNG atau JPEG, hasil selalu PNG; isi pesan dienkripsi AES-256-GCM
+- **Blockchain sederhana**: registri kepemilikan aset dengan **serah terima dua pihak** (TRANSFER + TERIMA) dan **periksa silang** antar laptop, serta **log audit** kejadian aplikasi yang tahan ubah (tamper-evident), dengan Proof of Work
+- **Komunikasi dua arah antar dua laptop**: **sambungan langsung** lewat jaringan (WebSocket, port 8765) untuk pesan, berkas `.enc`, gambar stego, dan serah terima aset; atau pertukaran berkas manual (`.enc`, `.png`) sebagai cadangan. Keduanya memakai passphrase bersama.
 
 > **Catatan platform:** harus dijalankan sebagai **aplikasi desktop (Electron)**, bukan di browser. Browser tidak bisa membaca serial number flashdisk dan tidak bisa mendeteksi pencabutannya. Deteksi dongle saat ini memakai **PowerShell, jadi hanya berjalan di Windows**.
 
@@ -41,9 +41,9 @@
 | Kesepakatan kunci antar laptop | **Passphrase bersama** (disepakati di luar aplikasi), karena algoritma klasik tidak asimetris |
 | Autentikasi | 3 faktor: dongle USB, password, wajah (**didaftarkan saat membuat akun**, wajib untuk semua akun) |
 | Penyimpanan | SQLite bawaan Node (`node:sqlite`), seluruh data sensitif terenkripsi |
-| Blockchain | Satu rantai untuk dua tujuan: registri aset (REGISTER, TRANSFER) dan **log audit** (blok `AUDIT`) |
+| Blockchain | Satu rantai untuk dua tujuan: registri aset (REGISTER, TRANSFER, TERIMA) dan **log audit** (blok `AUDIT`) |
 | Format berkas | **`.enc`** untuk pesan dan berkas terenkripsi (dibedakan oleh isinya), **`.sdk`** untuk kunci dongle, `.png` untuk gambar stego |
-| Transport antar laptop | **Berkas** (`.enc`, `.png`) yang dipindahkan secara manual (flashdisk, email, dsb.) |
+| Transport antar laptop | **Sambungan langsung** (WebSocket `ws`, port 8765, satu sambungan pada satu waktu) dan, sebagai cadangan, **berkas** yang dipindahkan manual (flashdisk, email, dsb.) |
 
 ### Studi kasus: distribusi aset kreatif antar studio
 
@@ -55,7 +55,8 @@ Dua studio kreatif bertukar aset yang belum dirilis di laptop yang sering dibawa
 | Pesan koordinasi tidak terbaca pihak ketiga | Super enkripsi Vigenère + DES, amplop ber-MAC |
 | Berkas aset besar harus utuh dan rahasia | AES-256-GCM (`.enc`) |
 | Catatan penting (lisensi, kesepakatan) aman di laptop | ChaCha20-Poly1305 di basis data |
-| Bukti siapa memegang hak atas aset dan siapa saja yang mengakses aplikasi | Blockchain: registri aset dan log audit; perubahan catatan lama terdeteksi |
+| Bukti siapa memegang hak atas aset dan kapan berpindah | Blockchain: registri aset, serah terima dua pihak, periksa silang dengan laptop lawan |
+| Jejak siapa mengakses aplikasi | Log audit pada rantai yang sama; perubahan catatan lama terdeteksi |
 
 Blockchain dipakai untuk membuktikan **urutan dan keutuhan catatan**, bukan untuk kerahasiaan (itu tugas enkripsi).
 
@@ -80,13 +81,14 @@ flowchart LR
     SEC["security/ (dongle, dongleMonitor, wajah)"]
     CRY["crypto/ (vigenere, des, superCipher,\nfileCipher, stegano, keys)"]
     CHAIN["chain/ (blockchain, audit, tambang, pow.worker)"]
-    CHAT["chat/ (kunciPercakapan, amplop, media)"]
+    CHAT["chat/ (kunciPercakapan, amplop, media,\ntautan, terima, terimaMedia, serah)"]
     DB["db/ (SQLite + dbCipher)"]
   end
   UI --> API --> GATE --> IPC
   IPC --> AUTH & SEC & CRY & CHAIN & CHAT & DB
   USB[("Flashdisk USB\n.sdk")] --> SEC
   CAM[("Kamera")] --> UI
+  LAWAN(("Laptop lawan")) <-->|WebSocket 8765| CHAT
 ```
 
 Setiap kanal IPC (kecuali `app:ping`, `auth:status`, `auth:daftar`, `auth:masuk`, `auth:keluar`, `auth:wajah`, `auth:daftarWajah`, `auth:ujiWajah`, `auth:selesaiDaftarWajah`, `auth:batalDaftar`, `dongle:status`) dibungkus `gerbang.js` sehingga **ditolak bila belum login penuh**. Gerbang yang sama **mencatat kejadian ke log audit** (login, pesan, berkas, dan sebagainya) setelah kanal selesai, sehingga tidak ada fitur yang lupa mencatat.
@@ -119,23 +121,28 @@ TA-Kriptoasik/
 │   │   │   ├── des.js          # DES 16 putaran + mode CBC (PKCS#7)
 │   │   │   ├── superCipher.js  # Vigenère -> DES CBC -> Base64
 │   │   │   ├── fileCipher.js   # AES-256-GCM, format .enc
-│   │   │   ├── stegano.js      # LSB acak pada PNG
+│   │   │   ├── stegano.js      # LSB acak; sampul PNG/JPEG, keluaran PNG
 │   │   │   └── keys.js         # PBKDF2-HMAC-SHA256 (200.000 iterasi)
 │   │   ├── chain/
-│   │   │   ├── blockchain.js   # blok, hash, validasi, aturan transaksi, blok AUDIT
+│   │   │   ├── blockchain.js   # blok, hash, validasi, aturan transaksi (REGISTER/TRANSFER/TERIMA), AUDIT
 │   │   │   ├── audit.js        # pencatatan log audit (antrean, tidak pernah melempar galat)
 │   │   │   ├── tambang.js      # penambangan di worker thread
 │   │   │   └── pow.worker.js   # pencarian nonce
 │   │   ├── chat/
 │   │   │   ├── kunciPercakapan.js # kunci percakapan dari passphrase bersama
 │   │   │   ├── amplop.js          # amplop pesan .enc + HMAC
-│   │   │   └── media.js           # pembungkus berkas/gambar untuk kontak
+│   │   │   ├── media.js           # pembungkus berkas/gambar untuk kontak
+│   │   │   ├── tautan.js          # sambungan langsung WebSocket (dengarkan/sambung/kirim)
+│   │   │   ├── terima.js          # verifikasi + dekripsi amplop (dipakai impor berkas dan sambungan)
+│   │   │   ├── terimaMedia.js     # simpan berkas/gambar yang diterima
+│   │   │   └── serah.js           # bukti serah terima aset (MAC) dan periksa silang
 │   │   ├── db/
 │   │   │   ├── db.js           # skema SQLite
 │   │   │   ├── dbCipher.js     # ChaCha20-Poly1305
 │   │   │   ├── percakapan.js   # percakapan dan riwayat pesan
 │   │   │   └── pesanPenting.js # arsip pesan penting
 │   │   └── ipc/                # penangan kanal IPC per fitur + gerbang.js
+│   │                           #   (jaringan.ipc.js: sambungan langsung, serah terima)
 │   ├── preload/preload.js  # jembatan aman: window.api
 │   └── renderer/           # tampilan (index.html, app.js, styles/app.css,
 │                           #   wajah.js, wajah-ui.js)
@@ -230,11 +237,11 @@ ciphertext = AES-GCM( panjangNama (2 byte) | nama berkas asli | isi berkas )
 
 ### 5.6 Steganografi gambar — `crypto/stegano.js`
 
-- Media: **PNG**, penyisipan pada **LSB kanal R, G, B** (alpha tidak disentuh).
+- Media: gambar sampul **PNG atau JPEG**, penyisipan pada **LSB kanal R, G, B** (alpha tidak disentuh). JPEG didekode ke piksel mentah (`jpeg-js`) lalu disisipi; **hasil selalu PNG**. Pengambilan pesan hanya dari PNG hasil sisip, karena kompresi JPEG (lossy) akan menghancurkan bit tersembunyi; berkas JPEG ditolak dengan pesan yang jelas.
 - Pesan dienkripsi dulu dengan **AES-256-GCM** (kunci dari passphrase via PBKDF2).
 - **Header 48 byte** di posisi berurutan: `salt (16) | iv (12) | tag (16) | panjang (4)`.
 - **Isi ciphertext** disebar ke **posisi acak tanpa pengulangan** (Fisher-Yates sebagian, bilangan acak dari HMAC-SHA256 dengan penghitung, kunci diturunkan dari passphrase). Tanpa passphrase yang benar, posisi bit tidak bisa diketahui.
-- Kualitas gambar dihitung dengan **PSNR**; kapasitas = `(piksel × 3 − 384) / 8` byte.
+- Kualitas gambar dihitung dengan **PSNR** (untuk sampul JPEG, dibandingkan dengan piksel hasil dekode); kapasitas = `(piksel × 3 − 384) / 8` byte.
 
 ### 5.7 Blockchain sederhana: registri aset dan log audit — `chain/`
 
@@ -244,13 +251,15 @@ ciphertext = AES-GCM( panjangNama (2 byte) | nama berkas asli | isi berkas )
 - Blok **genesis** tetap, sama di semua laptop.
 - Transaksi:
   - `REGISTER` — mendaftarkan aset (ID unik `[A-Za-z0-9_-]{1,40}`).
-  - `TRANSFER` — hanya pemilik saat ini yang boleh memindahkan aset.
-- `validasiRantai` memeriksa genesis, urutan indeks, kecocokan hash, PoW, tautan `hashSebelumnya`, dan aturan transaksi, serta menunjuk **blok pertama yang rusak**. UI menyediakan fitur untuk sengaja merusak blok sebagai uji keamanan.
+  - `TRANSFER` — hanya pemilik saat ini yang boleh memindahkan aset (ditulis pengirim).
+  - `TERIMA` — dicatat penerima sebagai saksi serah terima, memuat hash blok TRANSFER pengirim; ditolak bila pemilik di rantai lokal bukan pihak `dari` (mencegah penjualan ganda).
+- `validasiRantai` memeriksa genesis, urutan indeks, kecocokan hash, PoW, tautan `hashSebelumnya`, dan aturan transaksi, serta menunjuk **blok pertama yang rusak**.
 - Rantai disimpan di `rantai.json` pada folder data aplikasi (berkas dibuat saat blok pertama ditulis).
 - **Log audit** (`chain/audit.js`): kejadian penting dicatat sebagai blok `{ tipe: 'AUDIT', aksi, pelaku, rincian }` pada rantai yang sama. Contoh aksi: `LOGIN_BERHASIL`, `LOGIN_GAGAL`, `WAJAH_GAGAL`, `AKUN_DIBUAT`, `LOGOUT`, `DONGLE_DICABUT`, `PESAN_DIKIRIM`, `PESAN_DITERIMA`, `BERKAS_DIENKRIPSI`, `GAMBAR_DISISIPI`, `PESAN_PENTING_DIBUKA`. **Isi pesan, isi berkas, dan password tidak pernah dicatat.**
-- Penambahan blok berjalan lewat **antrean** (kejadian bersamaan tidak saling menimpa). Bila rantai sedang rusak, blok baru ditolak sampai di-**Reset**; kegagalan mencatat tidak pernah mengganggu fitur yang dipakai.
-- Halaman **Log Audit** menampilkan semua catatan, status validasi, dan tombol Rusakkan blok (demo) serta Reset.
-- **Batasan:** rantai disimpan lokal tanpa konsensus. Pemegang akses penuh ke laptop dapat menulis ulang seluruh rantai; yang terdeteksi adalah perubahan sebagian. Mitigasi yang dirancang tetapi belum dibuat: mencantumkan hash blok terakhir di amplop `.enc` ke laptop lawan.
+- Penambahan blok berjalan lewat **antrean** (kejadian bersamaan tidak saling menimpa). Bila rantai sedang rusak, blok baru ditolak; kegagalan mencatat tidak pernah mengganggu fitur yang dipakai.
+- Halaman **Log Audit** menampilkan semua catatan dan status validasi. Tidak ada tombol Reset atau Palsukan: log bersifat **tamper-evident** (perubahan terdeteksi), bukan tamper-proof (tidak bisa diubah).
+- **Serah terima aset** (halaman Aset, saat sambungan langsung aktif): pengirim menambang blok TRANSFER lalu mengirim bukti ber-MAC; penerima memverifikasi lalu menambang blok TERIMA. **Periksa silang** meminta blok TRANSFER dari laptop lawan dan membandingkannya dengan salinan lokal (status cocok, diubah, berbeda, atau hilang). Inilah bagian yang memberi nilai lebih dibanding rantai lokal biasa.
+- **Batasan:** rantai disimpan lokal (`rantai.json`, JSON biasa) tanpa konsensus. Siapa pun dengan akses penuh ke laptop dapat menulis ulang seluruh rantai; perubahan sebagian terdeteksi oleh validasi, dan perbedaan dengan laptop lawan terdeteksi oleh periksa silang. Demo: cadangkan `rantai.json`, ubah satu nilai di Notepad, lalu tekan Validasi rantai.
 
 ### 5.8 Hash password — `auth/password.js`
 
@@ -280,7 +289,7 @@ Berkas: `sandikarya.db` (SQLite) di folder data aplikasi.
 | Tabel | Isi utama |
 |---|---|
 | `users` | username, hash password (salt, iterasi), `kdf_salt`, hitungan gagal + waktu kunci, `dongle_tag`, `wajah_embedding` (terenkripsi) |
-| `pesan_penting` | arsip pesan penting per pengguna (`cipher` = label + isi terenkripsi) |
+| `pesan_penting` | arsip pesan penting per pengguna (`cipher` BLOB = label + isi, ChaCha20-Poly1305) |
 | `percakapan` | kontak, `kcv`, kunci master percakapan terenkripsi (`kunci_enc`), nomor urut kirim/terima |
 | `pesan` | riwayat pesan: arah (masuk/keluar), `seq`, waktu, `penting`, isi terenkripsi |
 
@@ -288,7 +297,7 @@ Berkas: `sandikarya.db` (SQLite) di folder data aplikasi.
 
 ## 7. Komunikasi Dua Laptop
 
-Komunikasi dilakukan dengan **pertukaran berkas**, tanpa server.
+Ada dua jalur dengan kunci percakapan dan amplop yang sama: **sambungan langsung** (utama) dan **pertukaran berkas** (cadangan).
 
 ### 7.1 Kunci percakapan
 
@@ -325,9 +334,20 @@ Pesan teks dan berkas sama-sama berekstensi `.enc`. Aplikasi membedakannya dari 
 ### 7.3 Berkas dan gambar untuk kontak
 
 - Berkas: format `.enc` (AES-256-GCM) dengan kunci `kunci.berkas`.
-- Gambar: pesan dienkripsi AES-256-GCM lalu disisipkan LSB dengan kunci `kunci.gambar`.
+- Gambar: pesan dienkripsi AES-256-GCM lalu disisipkan LSB dengan kunci `kunci.gambar`. Sampul boleh PNG atau JPEG; yang dikirim/disimpan selalu PNG.
 
-### 7.4 Alur
+### 7.4 Sambungan langsung (`chat/tautan.js`)
+
+1. Laptop A: buka halaman Chat, tekan **Mulai menerima** (mendengarkan di port 8765).
+2. Laptop B: isi alamat IP laptop A, tekan **Sambungkan**. Status kedua sisi menjadi *terhubung* setelah saling bertukar `halo` (nama pengguna). Batas waktu jabat tangan 5 detik.
+3. Kirim lewat tombol **Kirim langsung**: pesan teks, **berkas `.enc`** (batas 12 MB), dan **gambar stego**. Penerima memverifikasi amplop (tujuan, pengirim, HMAC, seq) lalu mendekripsi. Berkas yang diterima disimpan otomatis ke `Downloads\Sandikarya\` tanpa menimpa berkas lain; pada gambar stego, pesan diekstrak dan dicatat.
+4. Satu sambungan pada satu waktu. Sambungan putus otomatis saat logout atau dongle dicabut.
+
+Syarat jaringan: kedua laptop satu jaringan dan profil jaringan Private; bila gagal, izinkan port 8765 di firewall Windows, atau pakai hotspot ponsel (beberapa Wi-Fi publik/kampus mengisolasi klien). Gangguan di aplikasi memberi galat dalam sekitar 6 detik, bukan menggantung.
+
+Kanal sambungan menggunakan bingkai JSON: `halo`, `pesan`, `berkas`/`gambar` (Base64), `serah`/`periksa` dengan `jawab`, `ack`, dan `tolak`. Balasan ditunggu maksimal 30 detik. Sambungan **tidak** menggantikan keamanan amplop: isi tetap terenkripsi dan ber-MAC sehingga penyadap jaringan tidak membaca atau mengubahnya tanpa terdeteksi (sambungan sendiri tidak memakai TLS).
+
+### 7.5 Alur (pertukaran berkas)
 
 ```mermaid
 sequenceDiagram
@@ -360,7 +380,8 @@ Dependensi (dipasang otomatis oleh `npm install`):
 | `@noble/ciphers` | ChaCha20-Poly1305 |
 | `@vladmandic/human` | deteksi dan embedding wajah |
 | `pngjs` | membaca/menulis PNG untuk steganografi |
-| `ws` | WebSocket (dipakai skrip eksperimen di `tools/`) |
+| `jpeg-js` | mendekode JPEG menjadi gambar sampul steganografi |
+| `ws` | WebSocket: sambungan langsung antar laptop dan skrip di `tools/` |
 
 ---
 
@@ -399,14 +420,17 @@ Tanpa `--data-dir`, aplikasi memakai folder data bawaan Electron (`userData`).
 |---|---|
 | Pesan | super enkripsi/dekripsi teks (Vigenère + DES) |
 | File | enkripsi/dekripsi berkas ke `.enc` |
-| Gambar | sisipkan/ekstrak pesan rahasia di PNG |
-| Aset | blockchain: daftarkan, transfer, validasi, uji perusakan blok |
-| Log Audit | catatan kejadian aplikasi pada rantai blok, validasi, uji perusakan |
-| Chat | komunikasi dua laptop (lihat bagian 7) |
-| Arsip | simpan pesan penting terenkripsi di basis data |
+| Gambar | sisipkan pesan rahasia ke gambar PNG atau JPEG (hasil PNG); ambil pesan dari PNG |
+| Aset | daftarkan aset, validasi rantai, **serah terima** dan **periksa silang** dengan laptop lawan |
+| Log Audit | catatan kejadian aplikasi pada rantai blok dan status validasi |
+| Chat | komunikasi dua laptop: sambungan langsung dan berkas (lihat bagian 7) |
+| Pesan Penting | arsip catatan terenkripsi di basis data (`sandikarya.db`, tabel `pesan_penting`); dibuka kembali lewat halaman ini |
 
 4. Beberapa akun boleh memakai flashdisk yang sama (username harus unik).
 5. **Mencabut flashdisk saat sesi berjalan** akan langsung mengunci aplikasi.
+6. **Uji dua laptop:** kedua laptop menjalankan aplikasi, buat percakapan dengan passphrase yang sama (cocokkan KCV), sambungkan (bagian 7.4), kirim pesan/berkas/gambar, lalu daftarkan aset di laptop A, **Serahkan** ke laptop B, dan tekan **Periksa silang**.
+
+Data pengguna (kecuali `--data-dir`) tersimpan di `%APPDATA%\sandikarya\`: `sandikarya.db` (akun, percakapan, pesan, pesan penting; terenkripsi) dan `rantai.json` (blockchain).
 
 ---
 
@@ -417,7 +441,7 @@ npm test            # sekali jalan (vitest run)
 npm run test:watch  # mode pantau
 ```
 
-**121 tes dalam 12 berkas.** Cakupan (`tests/`): `vigenere`, `des` (termasuk vektor FIPS), `superCipher`, `fileCipher`, `stegano`, `dbCipher`, `blockchain`, `audit`, `auth`, `wajah`, `chat`, dan `wiring` (pengecekan penyambungan kanal IPC/preload).
+**155 tes dalam 15 berkas.** Cakupan (`tests/`): `vigenere`, `des` (termasuk vektor FIPS), `superCipher`, `fileCipher`, `stegano` (termasuk sampul JPEG), `dbCipher`, `blockchain` (termasuk TERIMA), `audit`, `auth`, `wajah`, `chat`, `tautan`, `terimaMedia`, `serah`, dan `wiring` (setiap kanal preload punya penangan, setiap `*.ipc.js` terdaftar di `index.js`).
 
 ---
 
@@ -444,7 +468,9 @@ node tools/ws-client.js ws://localhost:8765 nama
 - **Vigenère dan DES sudah usang** untuk pemakaian nyata (DES: kunci efektif 56 bit, blok 64 bit). Dipakai karena syarat tugas. Keamanan pesan teks di chat sebenarnya ditopang oleh **HMAC-SHA256 (encrypt-then-MAC)**.
 - Berkas, gambar, dan basis data memakai algoritma modern (AES-256-GCM, ChaCha20-Poly1305).
 - Kekuatan chat bergantung pada **kekuatan passphrase bersama** dan bagaimana passphrase itu dibagikan.
-- **Log audit disimpan lokal** tanpa konsensus: perubahan sebagian terdeteksi, tetapi penulisan ulang seluruh rantai oleh pemegang akses penuh tidak.
+- **Log audit disimpan lokal** tanpa konsensus: perubahan sebagian terdeteksi, tetapi penulisan ulang seluruh rantai oleh pemegang akses penuh tidak. Untuk aset, periksa silang dengan laptop lawan menutup celah ini.
+- Sambungan langsung tidak memakai TLS dan tidak ada penemuan otomatis (IP dimasukkan manual); keamanan isi bertumpu pada amplop ber-MAC dan enkripsi berkas.
+- Steganografi LSB tidak tahan kompresi: kirim hasil sebagai PNG, jangan lewat aplikasi yang mengompres gambar.
 - Deteksi dongle **khusus Windows**.
 - Pemantauan dongle dan verifikasi wajah berjalan di sisi aplikasi; wajah bukan pengganti kriptografi, hanya lapisan autentikasi tambahan. Tidak ada deteksi *liveness* (antispoof dimatikan), jadi foto dapat berpotensi mengelabui; ambang 0,6 perlu dikalibrasi di laptop demo lewat Uji skor.
 - Folder data pengguna (`data/`, `*.db`, `*.sdk`, `.env`) sudah dikecualikan di `.gitignore`.
@@ -453,4 +479,4 @@ node tools/ws-client.js ws://localhost:8765 nama
 
 ## Lisensi
 
-ISC (lihat `package.json`).  
+ISC (lihat `package.json`).

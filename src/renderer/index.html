@@ -132,7 +132,7 @@
         <!-- Gambar -->
     <section id="page-gambar" class="page">
       <h1>Gambar</h1>
-      <p>Steganografi: sembunyikan pesan teks di dalam gambar PNG (LSB). Pesan dienkripsi dulu dengan AES-256-GCM. Gambar hasil harus tetap berformat PNG; jangan dikirim lewat aplikasi yang mengompres gambar.</p>
+      <p>Steganografi: sembunyikan pesan teks di dalam gambar (LSB). Gambar asli boleh PNG atau JPEG, tetapi hasilnya selalu PNG karena JPEG mengompres dan merusak bit tersembunyi. Pesan dienkripsi dulu dengan AES-256-GCM. Jangan kirim hasilnya lewat aplikasi yang mengompres gambar.</p>
 
       <label for="gambar-passphrase">Passphrase (minimal 8 karakter)</label>
       <input id="gambar-passphrase" type="password" autocomplete="off" />
@@ -141,7 +141,7 @@
       <textarea id="gambar-pesan" rows="4"></textarea>
 
       <div class="baris-tombol">
-        <button id="gambar-sisipkan" class="aksi">Pilih PNG lalu sisipkan pesan</button>
+        <button id="gambar-sisipkan" class="aksi">Pilih PNG / JPeg lalu sisipkan pesan</button>
         <button id="gambar-ekstrak" class="aksi sekunder">Pilih PNG lalu ambil pesan</button>
       </div>
 
@@ -263,8 +263,8 @@
       <textarea id="chat-gambar-pesan" rows="2"></textarea>
       <div class="baris-tombol">
         <button id="chat-kirim-gambar-langsung" class="aksi">Kirim gambar langsung</button>
-        <button id="chat-kirim-gambar" class="aksi sekunder">Simpan gambar stego (PNG)</button>
-        <button id="chat-terima-gambar" class="aksi sekunder">Terima gambar stego (PNG)</button>
+        <button id="chat-kirim-gambar" class="aksi sekunder">Simpan gambar stegano (PNG/JPEG masuk, PNG keluar)</button>
+        <button id="chat-terima-gambar" class="aksi sekunder">Terima gambar stegano (PNG)</button>
       </div>
 
       <h2>Riwayat</h2>
