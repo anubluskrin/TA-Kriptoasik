@@ -315,15 +315,7 @@ function muatAudit() {
 
 document.getElementById('audit-muat').addEventListener('click', muatAudit);
 document.getElementById('audit-validasi').addEventListener('click', () => jalankanAudit(() => window.api.asetValidasi()));
-document.getElementById('audit-rusakkan').addEventListener('click', () => {
-  jalankanAudit(() =>
-    window.api.asetRusakkan(
-      parseInt(document.getElementById('audit-blok-rusak').value, 10),
-      document.getElementById('audit-nilai-palsu').value
-    )
-  );
-});
-document.getElementById('audit-reset').addEventListener('click', () => jalankanAudit(() => window.api.asetReset()));
+
 
   // Halaman Pesan Penting
 const elArsipLabel = document.getElementById('arsip-label');
