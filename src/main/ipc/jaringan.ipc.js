@@ -12,6 +12,8 @@ const { MAKS_TEKS } = require('../chat/amplop');
 const { siapkan, pilihBerkas } = require('./chatMedia.ipc');
 const { Tautan } = require('../chat/tautan');
 const audit = require('../chain/audit');
+const chain = require('../chain/blockchain');
+const serah = require('../chat/serah');
 
 async function jalankan(aksi) {
   try {
@@ -25,6 +27,40 @@ function kabari(kanal, isi) {
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) win.webContents.send(kanal, isi);
   }
+}
+
+// Kunci percakapan dengan seorang kontak (untuk MAC bukti serah terima)
+function kunciUntuk(saya, kontak) {
+  const idP = percakapan.cariKontak(saya.id, kontak);
+  if (!idP) throw new Error(`belum ada percakapan dengan ${kontak}`);
+  const p = percakapan.ambil(saya.id, idP, session.subkunci('db'));
+  const kunci = subkunci(p.master);
+  p.master.fill(0);
+  return kunci;
+}
+
+// Permintaan dari lawan: 'serah' (bukti serah terima aset) dan 'periksa' (minta blok TRANSFER untuk diperiksa silang)
+async function tanganiPermintaan(jenis, f, rekan) {
+  const saya = session.penggunaSaatIni();
+  if (jenis === 'serah') {
+    const data = serah.verifikasi(f.bukti, { saya: saya.username, rekan, kunci: kunciUntuk(saya, rekan) });
+    const { blok } = await audit.tambahBlok(data); // aturan rantai menolak bila pengirim bukan pemilik menurut catatan ini
+    kabari('event:pesan-masuk', {
+      idPercakapan: null,
+      dari: rekan,
+      aset: true,
+      ringkasan: `Aset ${data.idAset} diserahkan ${rekan} kepadamu (blok #${blok.index} di rantaimu)`,
+    });
+    return { indeks: blok.index };
+  }
+  if (jenis === 'periksa') {
+    const indeks = Array.isArray(f.indeks) ? f.indeks.slice(0, 50) : [];
+    if (!indeks.every((i) => Number.isInteger(i) && i >= 1)) throw new Error('Permintaan tidak valid');
+    const rantai = await audit.bacaRantai();
+    // Hanya blok TRANSFER yang dibuka; blok lain (log audit) tidak diberikan
+    return { blok: indeks.map((i) => (rantai[i] && rantai[i].data && rantai[i].data.tipe === 'TRANSFER' ? rantai[i] : null)) };
+  }
+  throw new Error('Permintaan tidak dikenal');
 }
 
 // Pesan yang masuk lewat sambungan melewati pemeriksaan yang sama dengan impor berkas
@@ -46,6 +82,7 @@ const tautan = new Tautan({
       ringkasan: `Pesan baru dari ${hasil.dari} (nomor ${hasil.seq})`,
     });
   },
+  saatPermintaan: tanganiPermintaan,
   saatMedia: async (jenis, data, rekan) => {
     const saya = session.penggunaSaatIni();
     const label = jenis === 'berkas' ? 'BERKAS' : 'GAMBAR';
@@ -124,6 +161,68 @@ async function kirimGambarLangsung(event, idPercakapan, pesan) {
   return { pesan: `Gambar berisi pesan tersembunyi terkirim ke ${p.kontak}` };
 }
 
+// Menyerahkan aset ke lawan yang sedang tersambung: blok TRANSFER dicatat di rantai sendiri,
+// lalu buktinya dikirim agar lawan mencatat blok TERIMA di rantainya.
+async function serahkan(idAset, ke) {
+  if (typeof idAset !== 'string' || typeof ke !== 'string') throw new Error('Isian tidak valid');
+  idAset = idAset.trim();
+  ke = ke.trim();
+  const saya = session.penggunaSaatIni();
+  pastikanTerhubung();
+  const rekan = tautan.status().rekan;
+  if (rekan !== ke) throw new Error(`Sedang terhubung dengan ${rekan}, bukan ${ke}`);
+  const kunci = kunciUntuk(saya, ke);
+
+  const rantai = await audit.bacaRantai();
+  const aset = chain.daftarAset(rantai).find((a) => a.idAset === idAset);
+  if (!aset) throw new Error(`Aset ${idAset} belum terdaftar`);
+
+  let blok;
+  if (aset.pemilik === ke) {
+    // Sudah tercatat berpindah ke lawan (mis. pengiriman sebelumnya gagal): kirim ulang buktinya
+    blok = [...rantai].reverse().find(
+      (b) => b.data.tipe === 'TRANSFER' && b.data.idAset === idAset && b.data.dari === saya.username && b.data.ke === ke
+    );
+    if (!blok) throw new Error(`Aset ${idAset} sudah dimiliki ${ke}`);
+  } else {
+    ({ blok } = await audit.tambahBlok({ tipe: 'TRANSFER', idAset, dari: saya.username, ke }));
+  }
+
+  try {
+    await tautan.kirimPermintaan('serah', ke, { bukti: serah.buat({ blok, nama: aset.nama, kunci }) });
+  } catch (err) {
+    throw new Error(
+      `Blok transfer #${blok.index} sudah tercatat di rantaimu, tetapi ${ke} belum menerima buktinya (${err.message}). Tekan Serahkan lagi untuk mengirim ulang.`
+    );
+  }
+  return { pesan: `Aset ${idAset} diserahkan ke ${ke}. Blok #${blok.index} dicatat di rantaimu dan di rantai ${ke}` };
+}
+
+// Memeriksa semua aset yang pernah diterima dari lawan: apakah blok TRANSFER di rantainya masih sama
+async function periksaSilang() {
+  const saya = session.penggunaSaatIni();
+  pastikanTerhubung();
+  const rekan = tautan.status().rekan;
+  const rantai = await audit.bacaRantai();
+  const terima = rantai
+    .filter((b) => b.data.tipe === 'TERIMA' && b.data.dari === rekan)
+    .map((b) => ({ blokSaya: b.index, ...b.data }))
+    .slice(-50);
+  if (terima.length === 0) return { hasil: [], pesan: `Belum ada aset yang diterima dari ${rekan}` };
+
+  const jawab = await tautan.kirimPermintaan('periksa', rekan, { indeks: terima.map((t) => t.indeksPengirim) });
+  const daftarBlok = jawab && Array.isArray(jawab.blok) ? jawab.blok : [];
+  const hasil = terima.map((t, i) => ({
+    idAset: t.idAset,
+    blokSaya: t.blokSaya,
+    indeksPengirim: t.indeksPengirim,
+    ...serah.periksaBlok(t, daftarBlok[i]),
+  }));
+  const bermasalah = hasil.filter((h) => h.status !== 'cocok').length;
+  audit.catat('PERIKSA_SILANG', saya.username, `${rekan}: ${hasil.length - bermasalah} cocok, ${bermasalah} bermasalah`);
+  return { hasil, pesan: bermasalah ? `${bermasalah} aset bermasalah` : `Semua ${hasil.length} aset cocok dengan rantai ${rekan}` };
+}
+
 function daftarkan() {
   ipcMain.handle('jaringan:status', () => jalankan(async () => tautan.status()));
   ipcMain.handle('jaringan:dengarkan', () => jalankan(() => tautan.dengarkan()));
@@ -134,6 +233,8 @@ function daftarkan() {
       return tautan.status();
     })
   );
+  ipcMain.handle('aset:serahkan', (event, idAset, ke) => jalankan(() => serahkan(idAset, ke)));
+  ipcMain.handle('aset:periksaSilang', () => jalankan(periksaSilang));
   ipcMain.handle('chat:kirimBerkasLangsung', (event, id) => jalankan(() => kirimBerkasLangsung(event, id)));
   ipcMain.handle('chat:kirimGambarLangsung', (event, id, pesan) =>
     jalankan(() => kirimGambarLangsung(event, id, pesan))

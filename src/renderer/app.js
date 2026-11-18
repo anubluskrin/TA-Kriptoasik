@@ -164,6 +164,7 @@ const elAsetRantai = document.getElementById('aset-rantai');
 function ringkasData(data) {
   if (data.tipe === 'REGISTER') return `REGISTER ${data.idAset} "${data.nama}" oleh ${data.pemilik}`;
   if (data.tipe === 'TRANSFER') return `TRANSFER ${data.idAset}: ${data.dari} -> ${data.ke}`;
+  if (data.tipe === 'TERIMA') return `TERIMA ${data.idAset} "${data.nama}" dari ${data.dari} (blok pengirim #${data.indeksPengirim})`;
   if (data.tipe === 'AUDIT') return `AUDIT ${data.aksi} oleh ${data.pelaku}`;
   return data.tipe;
 }
@@ -239,6 +240,37 @@ document.getElementById('aset-validasi').addEventListener('click', () => {
 
 document.getElementById('aset-reset').addEventListener('click', () => {
   jalankanAset(() => window.api.asetReset());
+});
+
+document.getElementById('aset-serahkan').addEventListener('click', () => {
+  jalankanAset(async () => {
+    const r = await window.api.asetSerahkan(nilaiAset('aset-id-serah'), nilaiAset('aset-ke-serah'));
+    if (!r.ok) return r;
+    return { ...(await window.api.asetStatus()), pesan: r.pesan };
+  });
+});
+
+document.getElementById('aset-periksa-silang').addEventListener('click', async () => {
+  const elSilang = document.getElementById('aset-silang');
+  elAsetStatus.textContent = 'Memeriksa...';
+  elAsetStatus.className = 'status';
+  const r = await window.api.asetPeriksaSilang();
+  if (!r.ok) {
+    elSilang.textContent = '';
+    tampilkanAset(r);
+    return;
+  }
+  elSilang.textContent = r.hasil.length
+    ? r.hasil
+        .map((h) => {
+          const kepala = `${h.idAset.padEnd(12)} blok saya #${h.blokSaya}, blok pengirim #${h.indeksPengirim}`;
+          return h.status === 'cocok' ? `${kepala}: COCOK` : `${kepala}: BERMASALAH (${h.alasan})`;
+        })
+        .join('\n')
+    : '(belum ada aset yang diterima dari lawan ini)';
+  const semuaCocok = r.hasil.every((h) => h.status === 'cocok');
+  elAsetStatus.textContent = r.pesan;
+  elAsetStatus.className = 'status ' + (semuaCocok ? 'sukses' : 'galat');
 });
 
 // Muat rantai yang tersimpan (dipanggil setelah login berhasil)
@@ -679,6 +711,7 @@ window.api.onJaringan((s) => tampilkanJaringan(s));
 window.api.onPesanMasuk((info) => {
   statusChat(info.ringkasan, true);
   muatPercakapan();
+  if (info.aset) muatAset();
 });
 
 // Berkas dan gambar untuk kontak

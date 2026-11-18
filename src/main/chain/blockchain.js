@@ -62,6 +62,23 @@ function terapkan(status, data) {
     return;
   }
 
+    // Aset yang diserahkan dari rantai laptop lain. Hash blok TRANSFER milik pengirim dicatat sebagai saksi.
+  if (data.tipe === 'TERIMA') {
+    if (!/^[A-Za-z0-9_-]{1,40}$/.test(String(data.idAset))) throw new Error('ID aset tidak valid');
+    periksaTeks(data.nama, 'Nama aset', 100);
+    periksaTeks(data.dari, 'Pengirim', 60);
+    periksaTeks(data.ke, 'Penerima', 60);
+    if (data.dari === data.ke) throw new Error('Pengirim dan penerima sama');
+    if (!/^[0-9a-f]{64}$/.test(String(data.hashPengirim))) throw new Error('Hash pengirim tidak valid');
+    if (!Number.isInteger(data.indeksPengirim) || data.indeksPengirim < 1) throw new Error('Nomor blok pengirim tidak valid');
+    const ada = status.get(data.idAset);
+    if (ada && ada.pemilik !== data.dari) {
+      throw new Error(`Menurut catatan rantai ini, pemilik aset ${data.idAset} adalah ${ada.pemilik}, bukan ${data.dari}`);
+    }
+    status.set(data.idAset, { nama: ada ? ada.nama : data.nama, pemilik: data.ke });
+    return;
+  }
+
     // Catatan kejadian (log audit): tidak mengubah status kepemilikan aset
   if (data.tipe === 'AUDIT') {
     periksaTeks(data.aksi, 'Aksi', 40);

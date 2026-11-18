@@ -110,3 +110,38 @@ describe('blockchain', () => {
     expect(chain.validasiRantai(r)).toEqual({ valid: true });
   }, 20000);
 });
+
+describe('TERIMA (serah terima dari rantai laptop lain)', () => {
+  const HASH = 'a'.repeat(64);
+  const TERIMA = { tipe: 'TERIMA', idAset: 'A1', nama: 'Laptop', dari: 'Hasan', ke: 'Budi', hashPengirim: HASH, indeksPengirim: 2 };
+
+  it('aset baru dicatat dengan pemilik penerima dan rantai tetap valid', () => {
+    const r = [chain.buatGenesis()];
+    tambahBlok(r, { ...TERIMA });
+    expect(chain.validasiRantai(r)).toEqual({ valid: true });
+    expect(chain.daftarAset(r)).toEqual([{ idAset: 'A1', nama: 'Laptop', pemilik: 'Budi' }]);
+  });
+
+  it('aset yang menurut catatan rantai ini dimiliki orang lain ditolak (mencegah serah ganda)', () => {
+    const r = [chain.buatGenesis()];
+    tambahBlok(r, { ...TERIMA });
+    // bukti yang sama diputar ulang: menurut rantai ini pemilik sekarang Budi, bukan Hasan
+    expect(() => chain.siapkanBlok(r, { ...TERIMA })).toThrow(/pemilik aset A1 adalah Budi, bukan Hasan/);
+  });
+
+  it('aset bisa diserahkan kembali dan diterima lagi', () => {
+    const r = [chain.buatGenesis()];
+    tambahBlok(r, { ...TERIMA });
+    tambahBlok(r, { tipe: 'TRANSFER', idAset: 'A1', dari: 'Budi', ke: 'Hasan' });
+    tambahBlok(r, { ...TERIMA, hashPengirim: 'b'.repeat(64), indeksPengirim: 5 });
+    expect(chain.validasiRantai(r)).toEqual({ valid: true });
+    expect(chain.daftarAset(r)[0].pemilik).toBe('Budi');
+  });
+
+  it('bentuk data yang salah ditolak', () => {
+    const r = [chain.buatGenesis()];
+    expect(() => chain.siapkanBlok(r, { ...TERIMA, hashPengirim: 'xyz' })).toThrow(/Hash pengirim/);
+    expect(() => chain.siapkanBlok(r, { ...TERIMA, indeksPengirim: 0 })).toThrow(/Nomor blok pengirim/);
+    expect(() => chain.siapkanBlok(r, { ...TERIMA, ke: 'Hasan' })).toThrow(/sama/);
+  });
+});

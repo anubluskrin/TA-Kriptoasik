@@ -53,6 +53,8 @@ contextBridge.exposeInMainWorld('api', {
   jaringanSambung: (alamat) => ipcRenderer.invoke('jaringan:sambung', alamat),
   jaringanPutus: () => ipcRenderer.invoke('jaringan:putus'),
   chatKirimLangsung: (id, teks, penting) => ipcRenderer.invoke('chat:kirimLangsung', id, teks, penting),
+  asetSerahkan: (idAset, ke) => ipcRenderer.invoke('aset:serahkan', idAset, ke),
+  asetPeriksaSilang: () => ipcRenderer.invoke('aset:periksaSilang'),
   chatKirimBerkasLangsung: (id) => ipcRenderer.invoke('chat:kirimBerkasLangsung', id),
   chatKirimGambarLangsung: (id, pesan) => ipcRenderer.invoke('chat:kirimGambarLangsung', id, pesan),
 

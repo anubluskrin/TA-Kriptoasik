@@ -31,11 +31,13 @@ function alamatLokal() {
 class Tautan {
   // ambilUsername: () => username akun yang sedang login (melempar galat bila belum login)
   // saatPesan:     (amplop, rekan) => memproses amplop masuk; melempar galat bila harus ditolak
+  // saatPermintaan: (jenis, bingkai, rekan) => hasil; permintaan 'serah' dan 'periksa'
   // saatBerubah:   (status) => dipanggil setiap status sambungan berubah
-  constructor({ ambilUsername, saatPesan, saatMedia, saatBerubah = () => {} }) {
+  constructor({ ambilUsername, saatPesan, saatMedia, saatPermintaan, saatBerubah = () => {} }) {
     this.ambilUsername = ambilUsername;
     this.saatPesan = saatPesan;
     this.saatMedia = saatMedia;     // saatMedia: (jenis, data, rekan) => memproses berkas/gambar masuk; melempar galat bila harus ditolak.
+    this.saatPermintaan = saatPermintaan;
     this.saatBerubah = saatBerubah;
     this.server = null;
     this.soket = null;
@@ -174,12 +176,25 @@ class Tautan {
       return;
     }
 
-    if (f.t === 'ack' || f.t === 'tolak') {
+    if (f.t === 'serah' || f.t === 'periksa') {
+      const id = typeof f.id === 'string' ? f.id : '';
+      let balasan;
+      try {
+        if (!this.saatPermintaan) throw new Error('Permintaan tidak didukung');
+        balasan = { t: 'jawab', id, hasil: await this.saatPermintaan(f.t, f, this.rekan) };
+      } catch (err) {
+        balasan = { t: 'tolak', id, alasan: err.message };
+      }
+      if (soket.readyState === WebSocket.OPEN) soket.send(JSON.stringify(balasan));
+      return;
+    }
+
+    if (f.t === 'ack' || f.t === 'tolak' || f.t === 'jawab') {
       const m = this.menunggu.get(f.id);
       if (!m) return;
       this.menunggu.delete(f.id);
-      if (f.t === 'ack') m.selesai();
-      else m.gagal(new Error(`Ditolak ${this.rekan}: ${String(f.alasan).slice(0, 200)}`));
+      if (f.t === 'tolak') m.gagal(new Error(`Ditolak ${this.rekan}: ${String(f.alasan).slice(0, 200)}`));
+      else m.selesai(f.hasil);
     }
   }
 
@@ -196,6 +211,12 @@ class Tautan {
     return this.kirimBingkai(id, ke, { t: jenis, id, data: data.toString('base64') });
   }
 
+    // Permintaan yang dijawab lawan dengan sebuah hasil (jenis: 'serah' atau 'periksa')
+  kirimPermintaan(jenis, ke, isi) {
+    const id = crypto.randomBytes(8).toString('hex');
+    return this.kirimBingkai(id, ke, { t: jenis, id, ...isi });
+  }
+
   kirimBingkai(id, ke, bingkai) {
     if (!this.soket || !this.rekan) return Promise.reject(new Error('Belum terhubung ke laptop lain'));
     if (ke !== this.rekan) {
@@ -207,7 +228,7 @@ class Tautan {
         gagal(new Error('Tidak ada balasan dari lawan bicara'));
       }, BATAS_BALASAN);
       this.menunggu.set(id, {
-        selesai: () => (clearTimeout(timer), selesai()),
+        selesai: (nilai) => (clearTimeout(timer), selesai(nilai)),
         gagal: (err) => (clearTimeout(timer), gagal(err)),
       });
       this.soket.send(JSON.stringify(bingkai));

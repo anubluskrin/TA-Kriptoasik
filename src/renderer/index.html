@@ -195,6 +195,18 @@
 
       <p id="aset-status" class="status"></p>
 
+      <h2>Serah terima antar laptop</h2>
+      <p>Perlu sambungan langsung (halaman Percakapan). Transfer dicatat di rantaimu, lalu buktinya dikirim ke lawan yang mencatatnya di rantainya sendiri. Pemilik aset harus berupa username akunmu.</p>
+      <label for="aset-id-serah">ID aset</label>
+      <input id="aset-id-serah" type="text" autocomplete="off" />
+      <label for="aset-ke-serah">Username penerima (lawan yang sedang tersambung)</label>
+      <input id="aset-ke-serah" type="text" autocomplete="off" />
+      <div class="baris-tombol">
+        <button id="aset-serahkan" class="aksi">Serahkan aset</button>
+        <button id="aset-periksa-silang" class="aksi sekunder">Periksa silang dengan pengirim</button>
+      </div>
+      <pre id="aset-silang" class="keluaran"></pre>
+
       <h2>Daftar aset saat ini</h2>
       <pre id="aset-daftar" class="keluaran"></pre>
 

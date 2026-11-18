@@ -14,6 +14,10 @@ async function buatLaptop(username, kunci, seqAwal = 0) {
       seqTerima = hasil.seq;
       masuk.push(hasil.teks);
     },
+      saatPermintaan: (jenis, f) => {
+      if (f.x === 'TOLAK') throw new Error('tidak diizinkan');
+      return { jenis, gema: f.x };
+    },
       saatMedia: (jenis, data) => {
       if (data.toString() === 'RUSAK') throw new Error('kunci berbeda');
       media.push([jenis, data.toString()]);
@@ -126,5 +130,12 @@ describe('Tautan (sambungan langsung)', () => {
   it('kiriman lebih dari 12 MB ditolak dengan petunjuk memakai berkas manual', async () => {
     await hubungkan();
     await expect(budi.tautan.kirimMedia('berkas', 'hasan', Buffer.alloc(12 * 1024 * 1024 + 1))).rejects.toThrow(/maksimal 12 MB/);
+  });
+    it('permintaan serah dan periksa dijawab lawan, dan penolakan menjadi galat', async () => {
+    await hubungkan();
+    await expect(budi.tautan.kirimPermintaan('serah', 'hasan', { x: 7 })).resolves.toEqual({ jenis: 'serah', gema: 7 });
+    await expect(budi.tautan.kirimPermintaan('periksa', 'hasan', { x: 8 })).resolves.toEqual({ jenis: 'periksa', gema: 8 });
+    await expect(budi.tautan.kirimPermintaan('serah', 'hasan', { x: 'TOLAK' })).rejects.toThrow(/Ditolak hasan: tidak diizinkan/);
+    await expect(budi.tautan.kirimPermintaan('serah', 'cici', {})).rejects.toThrow(/bukan cici/);
   });
 });
